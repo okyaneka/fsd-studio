@@ -4,7 +4,8 @@ import { createFsdDocument, normalizeIdPrefix } from '../core/schema';
 import { putRecord, deleteFsdDocumentAndRelatedRecords } from '../core/database';
 import { STORES, DOCUMENT_STATUSES } from '../core/constants';
 import { Modal } from '../components/Modal';
-import { ArrowLeftIcon, PlusIcon, DocumentIcon, EditIcon, TrashIcon, ChevronRightIcon, ExclamationTriangleIcon, LayersIcon } from '../components/Icons';
+import { ArrowLeftIcon, PlusIcon, DocumentIcon, EditIcon, TrashIcon, ChevronRightIcon, ExclamationTriangleIcon, LayersIcon, DownloadIcon } from '../components/Icons';
+import { downloadBackupFile } from '../core/backup';
 
 interface ProjectDetailViewProps {
   project: Project;
@@ -118,6 +119,19 @@ export function ProjectDetailView({
       alert(`Gagal memperbarui FSD: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const [isBackingUp, setIsBackingUp] = useState(false);
+
+  const handleQuickBackup = async () => {
+    try {
+      setIsBackingUp(true);
+      await downloadBackupFile();
+    } catch (err) {
+      alert(`Gagal mengekspor backup: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setIsBackingUp(false);
     }
   };
 
@@ -531,6 +545,23 @@ export function ProjectDetailView({
                 Anda akan menghapus dokumen <strong>"{deletingFsd?.metadata.title}"</strong> ({deletingFsd?.metadata.code}) beserta seluruh modul dan wireframe di dalamnya.
               </p>
             </div>
+          </div>
+
+          {/* Anjuran Backup */}
+          <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-amber-800">Anjuran Pencadangan Data</p>
+              <p className="text-amber-700 mt-0.5">Disarankan mengekspor file backup sebelum menghapus data permanen.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleQuickBackup}
+              disabled={isBackingUp}
+              className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-md transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <DownloadIcon className="w-3.5 h-3.5" />
+              {isBackingUp ? 'Mengunduh...' : 'Ekspor Backup'}
+            </button>
           </div>
 
           <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">

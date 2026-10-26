@@ -183,6 +183,9 @@ export function ModulePreviewSection({ module, assetUrls }: ModulePreviewSection
                     <img
                       src={assetUrls[screen.wireframeAssetId]}
                       alt={screen.imageAlt || screen.name}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
                       className="max-h-[360px] mx-auto object-contain border border-slate-300 rounded shadow-xs"
                     />
                   ) : (

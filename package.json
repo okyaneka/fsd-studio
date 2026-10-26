@@ -12,6 +12,8 @@
     "verify:m2": "node scripts/verify-milestone2.mjs",
     "verify:m3": "node scripts/verify-milestone3.mjs",
     "verify:m4": "node scripts/verify-milestone4.mjs",
+    "verify:m5": "node scripts/verify-milestone5.mjs",
+    "verify:all": "npm run verify:core && npm run verify:m1 && npm run verify:m2 && npm run verify:m3 && npm run verify:m4 && npm run verify:m5 && npm run typecheck && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {

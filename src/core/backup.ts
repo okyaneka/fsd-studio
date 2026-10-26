@@ -54,3 +54,18 @@ function dataUrlToBlob(dataUrl: string): Blob {
   for (let index = 0; index < bytes.length; index += 1) buffer[index] = bytes.charCodeAt(index);
   return new Blob([buffer], { type: mime });
 }
+
+export async function downloadBackupFile(filenamePrefix = 'fsd-studio-backup'): Promise<void> {
+  const backup = await createWorkspaceBackup();
+  const json = stringifyBackup(backup);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0, 10);
+  anchor.href = url;
+  anchor.download = `${filenamePrefix}-${dateStr}.json`;
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  URL.revokeObjectURL(url);
+}

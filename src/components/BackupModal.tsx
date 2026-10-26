@@ -1,7 +1,9 @@
 import { ChangeEvent, useState } from 'react';
 import { Modal } from './Modal';
-import { DownloadIcon, ExclamationTriangleIcon, UploadIcon } from './Icons';
-import { createWorkspaceBackup, parseBackup, restoreWorkspaceBackup, stringifyBackup } from '../core/backup';
+import { DownloadIcon, ExclamationTriangleIcon, UploadIcon, DocumentIcon } from './Icons';
+import { downloadBackupFile, restoreWorkspaceBackup } from '../core/backup';
+import { validateBackupDetailed, createBackupTemplate } from '../core/backupValidator';
+import type { BackupPayload } from '../core/types';
 
 interface BackupModalProps {
   isOpen: boolean;
@@ -12,24 +14,14 @@ interface BackupModalProps {
 export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
 
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      const backup = await createWorkspaceBackup();
-      const json = stringifyBackup(backup);
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      const dateStr = new Date().toISOString().slice(0, 10);
-      anchor.href = url;
-      anchor.download = `fsd-studio-backup-${dateStr}.json`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-      URL.revokeObjectURL(url);
+      await downloadBackupFile();
     } catch (err) {
       alert(`Gagal mengekspor backup: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -37,11 +29,26 @@ export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const template = createBackupTemplate();
+    const json = JSON.stringify(template, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'fsd-studio-template.json';
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
+
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setImportError(null);
+    setValidationErrors([]);
+    setValidationWarnings([]);
     setImportSuccess(null);
 
     const confirmed = window.confirm(
@@ -55,15 +62,36 @@ export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
     try {
       setIsImporting(true);
       const text = await file.text();
-      const payload = parseBackup(text);
-      await restoreWorkspaceBackup(payload);
-      setImportSuccess('Data backup berhasil dipulihkan!');
+      let rawPayload: unknown;
+      try {
+        rawPayload = JSON.parse(text);
+      } catch {
+        setValidationErrors(['File yang diunggah bukan format JSON yang valid.']);
+        return;
+      }
+
+      // Detailed Schema Validation
+      const report = validateBackupDetailed(rawPayload);
+      if (!report.isValid) {
+        setValidationErrors(report.errors);
+        setValidationWarnings(report.warnings);
+        return;
+      }
+
+      if (report.warnings.length > 0) {
+        setValidationWarnings(report.warnings);
+      }
+
+      await restoreWorkspaceBackup(rawPayload as BackupPayload);
+      setImportSuccess(
+        `Data backup berhasil dipulihkan! (${report.summary.projectCount} project, ${report.summary.fsdCount} dokumen, ${report.summary.moduleCount} modul, ${report.summary.assetCount} aset)`
+      );
       setTimeout(() => {
         onRestored();
         onClose();
-      }, 1000);
+      }, 1500);
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : 'File backup tidak valid atau rusak.');
+      setValidationErrors([err instanceof Error ? err.message : 'File backup tidak valid atau gagal dipulihkan.']);
     } finally {
       setIsImporting(false);
       event.target.value = '';
@@ -89,6 +117,7 @@ export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
         </div>
 
         <div className="space-y-4">
+          {/* Ekspor Backup */}
           <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex items-center justify-between">
             <div>
               <h4 className="text-sm font-semibold text-slate-800">Ekspor Backup</h4>
@@ -105,6 +134,7 @@ export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
             </button>
           </div>
 
+          {/* Pulihkan Backup */}
           <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex items-center justify-between">
             <div>
               <h4 className="text-sm font-semibold text-slate-800">Pulihkan Backup (Restore)</h4>
@@ -122,12 +152,46 @@ export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
               />
             </label>
           </div>
+
+          {/* Unduh Template Backup */}
+          <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-semibold text-slate-800">Template Skema Backup</h4>
+              <p className="text-xs text-slate-500 mt-0.5">Unduh contoh template JSON yang valid dengan struktur 9 subbagian modul lengkap.</p>
+            </div>
+            <button
+              type="button"
+              onClick={handleDownloadTemplate}
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg shadow-xs transition-colors cursor-pointer"
+            >
+              <DocumentIcon className="w-4 h-4 text-slate-600" />
+              Unduh Template
+            </button>
+          </div>
         </div>
 
-        {importError && (
-          <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-800 text-xs">
-            <p className="font-semibold">Gagal Memulihkan Backup:</p>
-            <p className="mt-0.5">{importError}</p>
+        {validationErrors.length > 0 && (
+          <div className="p-3.5 rounded-lg bg-red-50 border border-red-200 text-red-900 text-xs space-y-1.5">
+            <div className="flex items-center gap-2 font-semibold text-red-800">
+              <ExclamationTriangleIcon className="w-4 h-4 text-red-600" />
+              Validasi Skema Gagal ({validationErrors.length} kesalahan ditemukan):
+            </div>
+            <ul className="list-disc list-inside space-y-1 text-red-700 pl-1">
+              {validationErrors.map((err, idx) => (
+                <li key={idx} className="leading-relaxed">{err}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {validationWarnings.length > 0 && (
+          <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-1">
+            <p className="font-semibold text-amber-800">Catatan / Peringatan:</p>
+            <ul className="list-disc list-inside space-y-0.5 text-amber-700 pl-1">
+              {validationWarnings.map((warn, idx) => (
+                <li key={idx} className="leading-relaxed">{warn}</li>
+              ))}
+            </ul>
           </div>
         )}
 
@@ -141,7 +205,7 @@ export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
+            className="px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
             Tutup
           </button>
@@ -150,4 +214,3 @@ export function BackupModal({ isOpen, onClose, onRestored }: BackupModalProps) {
     </Modal>
   );
 }
-

@@ -42,8 +42,11 @@ export function WireframeAssetViewer({
           setImageUrl(createdUrl);
         } else if (active) {
           setImageUrl(null);
+          if (assetId) {
+            setErrorMessage('File gambar tidak ditemukan di penyimpanan lokal (mungkin telah terhapus atau belum dipulihkan dari backup).');
+          }
         }
-      } catch (err) {
+      } catch {
         if (active) {
           setErrorMessage('Gagal memuat gambar dari penyimpanan lokal.');
         }
@@ -117,6 +120,10 @@ export function WireframeAssetViewer({
           <img
             src={imageUrl}
             alt="Wireframe preview"
+            onError={() => {
+              setImageUrl(null);
+              setErrorMessage('File gambar rusak atau format tidak dapat didekode oleh browser.');
+            }}
             className="max-h-72 object-contain rounded border border-slate-200 shadow-xs bg-white"
           />
           <div className="mt-3 flex items-center gap-2">

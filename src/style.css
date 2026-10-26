@@ -139,7 +139,13 @@ select:not([multiple]) {
     font-size: 8pt !important;
   }
 
-  .fsd-table tr {
+  .fsd-table tr,
+  .fsd-card,
+  .flow-card,
+  .wireframe,
+  .fsd-notice,
+  pre,
+  blockquote {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
