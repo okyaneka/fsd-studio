@@ -162,10 +162,23 @@ if (!fs.existsSync(previewViewPath) || !fs.existsSync(coverPath) || !fs.existsSy
   throw new Error('Preview components missing from src/views/preview/');
 }
 
-const previewContent = fs.readFileSync(previewViewPath, 'utf-8');
-const coverContent = fs.readFileSync(coverPath, 'utf-8');
+function readAllCodeRecursive(dir) {
+  let content = '';
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      content += readAllCodeRecursive(fullPath);
+    } else if (entry.isFile() && (entry.name.endsWith('.tsx') || entry.name.endsWith('.ts'))) {
+      content += fs.readFileSync(fullPath, 'utf-8');
+    }
+  }
+  return content;
+}
+
+const previewContent = readAllCodeRecursive(path.resolve('src/views/preview'));
 const detailContent = fs.readFileSync(detailViewPath, 'utf-8');
-const fullRenderedCode = previewContent + coverContent;
+const fullRenderedCode = previewContent;
 
 // Verify TOC targets exist in renderer
 const requiredSections = [
