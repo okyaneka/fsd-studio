@@ -1,0 +1,29 @@
+{
+  "name": "fsd-studio",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "verify:core": "node scripts/verify-core.mjs",
+    "verify:m1": "node scripts/verify-milestone1.mjs",
+    "verify:m2": "node scripts/verify-milestone2.mjs",
+    "verify:m3": "node scripts/verify-milestone3.mjs",
+    "verify:m4": "node scripts/verify-milestone4.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vite": "latest"
+  }
+}

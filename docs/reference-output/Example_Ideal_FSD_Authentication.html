@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Functional Specification Document — Authentication</title>
+<style>
+  :root {
+    --ink:#202a36; --muted:#617083; --line:#d7dee7; --soft:#f4f7fa;
+    --navy:#17324d; --blue:#2e648e; --accent:#dceaf5; --white:#fff;
+    --warning:#fff5df; --warning-line:#e9c46a;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body { margin:0; color:var(--ink); background:#e9edf2; font:14px/1.55 Arial, Helvetica, sans-serif; }
+  a { color:#235f8c; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  .topbar { position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:11px 22px; background:#142b40; color:white; box-shadow:0 2px 8px #0002; }
+  .brand { font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+  .top-actions { display:flex; gap:8px; flex-wrap:wrap; }
+  .top-actions button { border:1px solid #7890a4; border-radius:5px; padding:7px 11px; background:transparent; color:white; cursor:pointer; font-size:12px; }
+  .top-actions button:hover { background:#29475f; }
+  .shell { display:grid; grid-template-columns:245px minmax(0,1fr); max-width:1500px; margin:0 auto; align-items:start; gap:24px; padding:24px; }
+  .sidebar { position:sticky; top:62px; max-height:calc(100vh - 82px); overflow:auto; background:white; border:1px solid var(--line); border-radius:8px; padding:18px 14px; }
+  .sidebar h2 { margin:0 8px 12px; font-size:12px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+  .sidebar a { display:block; padding:7px 9px; border-radius:4px; color:#34475a; font-size:12px; }
+  .sidebar a:hover, .sidebar a.active { background:#eaf2f8; color:#174d76; font-weight:700; }
+  .sidebar .sub { padding-left:23px; font-size:11px; }
+  main { min-width:0; }
+  .page { width:210mm; min-height:297mm; margin:0 auto 24px; padding:19mm 18mm 18mm; background:white; box-shadow:0 3px 16px #1c2a3918; position:relative; }
+  .page.cover { display:flex; flex-direction:column; justify-content:space-between; min-height:297mm; }
+  .eyebrow { color:var(--blue); text-transform:uppercase; letter-spacing:.14em; font-size:10px; font-weight:700; }
+  h1 { color:var(--navy); font-size:33px; line-height:1.14; margin:20px 0 12px; }
+  h2 { color:var(--navy); font-size:22px; margin:0 0 13px; padding-bottom:7px; border-bottom:2px solid var(--accent); }
+  h3 { color:#244b69; font-size:15px; margin:22px 0 8px; }
+  h4 { font-size:13px; margin:15px 0 6px; color:#2f4356; }
+  p { margin:7px 0 10px; }
+  .subtitle { color:var(--muted); font-size:17px; max-width:560px; }
+  .cover-band { margin-top:42px; padding:20px 22px; background:var(--soft); border-left:4px solid var(--blue); }
+  .cover-band strong { display:block; margin-bottom:6px; }
+  .cover-meta { width:100%; border-collapse:collapse; margin-top:20px; font-size:12px; }
+  .cover-meta td { padding:9px 10px; border:1px solid var(--line); }
+  .cover-meta td:first-child { width:34%; background:var(--soft); font-weight:700; }
+  .cover-footer { display:flex; justify-content:space-between; border-top:1px solid var(--line); padding-top:10px; color:var(--muted); font-size:10px; }
+  .section { scroll-margin-top:80px; }
+  .section + .section { margin-top:28px; }
+  .callout { background:#f0f6fb; border:1px solid #c7dbe9; border-radius:4px; padding:12px 14px; margin:12px 0; }
+  .warning { background:var(--warning); border:1px solid var(--warning-line); border-radius:4px; padding:12px 14px; margin:12px 0; }
+  .small { color:var(--muted); font-size:11px; }
+  .meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:12px 0; }
+  .meta-card { padding:12px; background:var(--soft); border:1px solid var(--line); }
+  .meta-card .label { display:block; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.06em; }
+  .meta-card strong { display:block; margin-top:3px; }
+  table { border-collapse:collapse; width:100%; margin:10px 0 16px; font-size:11px; overflow-wrap:anywhere; }
+  th { background:#eaf0f5; color:#203d55; text-align:left; font-weight:700; }
+  th, td { border:1px solid #cfd8e1; padding:7px 8px; vertical-align:top; }
+  tr { break-inside:avoid; }
+  ul, ol { margin:7px 0 12px; padding-left:22px; }
+  li { margin:3px 0; }
+  .tag { display:inline-block; font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; padding:2px 6px; border-radius:3px; background:#e6eef5; color:#2a5879; }
+  .wireframe { border:1px solid #aebbc8; background:#fafbfd; padding:12px; margin:12px auto 18px; max-width:470px; }
+  .wf-window { border:1px solid #d5dce4; background:white; padding:14px; min-height:240px; }
+  .wf-logo { text-align:center; color:#244b69; font-weight:700; font-size:14px; padding:8px; }
+  .wf-title { text-align:center; font-weight:700; font-size:16px; margin:8px 0 3px; }
+  .wf-help { text-align:center; color:#687889; font-size:10px; margin-bottom:14px; }
+  .wf-label { font-size:10px; font-weight:700; margin:8px 0 4px; }
+  .wf-input { border:1px solid #bac6d1; border-radius:3px; padding:8px; color:#81909d; font-size:10px; }
+  .wf-row { display:flex; justify-content:space-between; gap:8px; font-size:10px; margin:9px 0; color:#53687b; }
+  .wf-button { margin-top:12px; background:#254f70; color:white; text-align:center; padding:9px; border-radius:3px; font-size:11px; font-weight:700; }
+  .wf-foot { text-align:center; font-size:10px; margin-top:12px; color:#53687b; }
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .mini-card { border:1px solid var(--line); padding:11px; background:#fff; }
+  .mini-card h4 { margin-top:0; }
+  .page-number { position:absolute; bottom:9mm; right:18mm; color:#8794a1; font-size:9px; }
+  .footer-note { border-top:1px solid var(--line); margin-top:22px; padding-top:8px; color:var(--muted); font-size:10px; }
+  code { font-family:Consolas, monospace; background:#f0f3f6; padding:1px 4px; border-radius:3px; font-size:10px; }
+  @media (max-width: 1050px) {
+    .shell { grid-template-columns:1fr; padding:12px; }
+    .sidebar { position:relative; top:auto; max-height:none; }
+    .sidebar nav { columns:2; }
+    .page { width:100%; min-height:auto; padding:28px 22px 42px; }
+    .page-number { bottom:12px; right:22px; }
+  }
+  @media print {
+    @page { size:A4; margin:0; }
+    body { background:white; font-size:10pt; }
+    .topbar, .sidebar { display:none !important; }
+    .shell { display:block; padding:0; margin:0; max-width:none; }
+    .page { width:210mm; height:297mm; min-height:297mm; margin:0; padding:18mm 17mm 17mm; box-shadow:none; break-after:page; overflow:hidden; }
+    .page:last-child { break-after:auto; }
+    a { color:inherit; text-decoration:none; }
+    .section { scroll-margin-top:0; }
+    table { font-size:8pt; }
+    .page-number { bottom:8mm; right:17mm; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">Product Documentation / FSD</div>
+  <div class="top-actions">
+    <button onclick="window.print()">Print / Save as PDF</button>
+    <button onclick="document.querySelectorAll('.sidebar a').forEach(a=>a.classList.remove('active')); window.scrollTo({top:0,behavior:'smooth'})">Back to Top</button>
+  </div>
+</header>
+<div class="shell">
+  <aside class="sidebar">
+    <h2>Document Navigation</h2>
+    <nav id="toc">
+      <a href="#cover">Cover</a>
+      <a href="#control">1. Document Control</a>
+      <a href="#overview">2. Overview & Scope</a>
+      <a href="#context">3. Business Context</a>
+      <a href="#roles">4. Actors & Assumptions</a>
+      <a href="#flows">5. Process Flows</a>
+      <a class="sub" href="#login-flow">5.1 Login</a>
+      <a class="sub" href="#register-flow">5.2 Registration</a>
+      <a class="sub" href="#verify-flow">5.3 Email Verification</a>
+      <a class="sub" href="#reset-flow">5.4 Password Reset</a>
+      <a href="#ui">6. UI / Lo-Fi Specification</a>
+      <a class="sub" href="#login-ui">6.1 Login Screen</a>
+      <a class="sub" href="#register-ui">6.2 Registration Screen</a>
+      <a href="#requirements">7. Functional Requirements</a>
+      <a class="sub" href="#login-req">7.1 Login</a>
+      <a class="sub" href="#register-req">7.2 Registration</a>
+      <a class="sub" href="#verification-req">7.3 Verification & Reset</a>
+      <a href="#rules">8. Business Rules</a>
+      <a href="#data">9. Data & Validation</a>
+      <a href="#interfaces">10. Integration Requirements</a>
+      <a href="#errors">11. Error Handling</a>
+      <a href="#security">12. Security & NFR</a>
+      <a href="#acceptance">13. Acceptance Criteria</a>
+      <a href="#traceability">14. Traceability Matrix</a>
+      <a href="#open-items">15. Open Items & Approvals</a>
+      <a href="#appendix">Appendix A. API Handoff Checklist</a>
+    </nav>
+  </aside>
+  <main>
+    <section class="page cover" id="cover">
+      <div>
+        <div class="eyebrow">Functional Specification Document</div>
+        <h1>Authentication</h1>
+        <p class="subtitle">Login, User Registration, Email Verification, and Password Reset</p>
+        <div class="cover-band">
+          <strong>Purpose of this document</strong>
+          Define the expected user-visible behavior, business rules, field validation, screen interactions, integration requirements, and acceptance criteria for the Authentication module. Technical implementation details are maintained in the Technical Design.
+        </div>
+        <table class="cover-meta">
+          <tr><td>Document ID</td><td>FSD-AUTH-001</td></tr>
+          <tr><td>Version</td><td>1.0 — Draft for Review</td></tr>
+          <tr><td>Status</td><td>For Business / Solution Review</td></tr>
+          <tr><td>Prepared By</td><td>Business Analyst</td></tr>
+          <tr><td>Reviewed By</td><td>Solution Architect / Product Owner</td></tr>
+          <tr><td>Target Release</td><td>To be confirmed</td></tr>
+          <tr><td>Last Updated</td><td>23 October 2026</td></tr>
+        </table>
+      </div>
+      <div class="cover-footer"><span>CONFIDENTIAL — INTERNAL PROJECT DOCUMENT</span><span>FSD-AUTH-001 · v1.0</span></div>
+    </section>
+
+    <section class="page section" id="control">
+      <h2>1. Document Control</h2>
+      <h3>1.1 Revision History</h3>
+      <table><thead><tr><th>Version</th><th>Date</th><th>Author</th><th>Change Summary</th></tr></thead><tbody>
+        <tr><td>0.1</td><td>23 Oct 2026</td><td>Business Analyst</td><td>Initial draft covering Login, Registration, Verification, and Password Reset.</td></tr>
+        <tr><td>1.0</td><td>TBC</td><td>Business Analyst</td><td>To be updated after stakeholder review and approval.</td></tr>
+      </tbody></table>
+      <h3>1.2 Review and Approval</h3>
+      <table><thead><tr><th>Role</th><th>Responsibility</th><th>Name / Status</th></tr></thead><tbody>
+        <tr><td>Product Owner / Business Owner</td><td>Approve business scope, policies, and user outcomes.</td><td>Pending</td></tr>
+        <tr><td>Business Analyst</td><td>Own functional requirements, business rules, field-level behavior, and traceability.</td><td>Document owner</td></tr>
+        <tr><td>Solution Architect</td><td>Validate solution feasibility, security design, and API / system contracts.</td><td>Pending</td></tr>
+        <tr><td>Development Lead</td><td>Confirm implementation interpretation and identify technical dependencies.</td><td>Pending</td></tr>
+        <tr><td>QA Lead</td><td>Validate testability and acceptance criteria coverage.</td><td>Pending</td></tr>
+      </tbody></table>
+      <h3>1.3 Related Documents</h3>
+      <ul>
+        <li>API Specification — Authentication endpoints and request/response schemas.</li>
+        <li>Technical Design — architecture, token/session handling, persistence, and security implementation.</li>
+        <li>Test Specification — test scenarios and detailed test cases derived from this FSD.</li>
+        <li>UI Design System — shared components, typography, colors, and accessibility standards.</li>
+      </ul>
+      <div class="callout"><strong>Document boundary:</strong> This FSD defines <em>what</em> the system must do. API Specification defines the agreed interface contract; Technical Design defines <em>how</em> the solution is implemented. The BA coordinates functional payload and response requirements with the SA, while the SA confirms technical feasibility and contract design.</div>
+      <div class="page-number">2</div>
+    </section>
+
+    <section class="page section" id="overview">
+      <h2>2. Overview & Scope</h2>
+      <h3>2.1 Objective</h3>
+      <p>Provide a consistent and secure entry point for users to create an account, access the application, verify their email address, and recover access when they forget their password.</p>
+      <h3>2.2 In Scope</h3>
+      <ul>
+        <li>Login using email address and password.</li>
+        <li>New account registration using the agreed mandatory profile fields.</li>
+        <li>Email verification after registration, if required by the business policy.</li>
+        <li>Forgot-password request and password reset.</li>
+        <li>Field validation, loading states, success/error feedback, and navigation between authentication screens.</li>
+        <li>Handling of duplicate email addresses, unverified accounts, invalid credentials, and expired or invalid links.</li>
+      </ul>
+      <h3>2.3 Out of Scope</h3>
+      <ul>
+        <li>Social sign-in, Single Sign-On (SSO), multi-factor authentication, and passkeys unless separately approved.</li>
+        <li>Profile completion after registration, account deletion, account suspension administration, and role/permission management.</li>
+        <li>Detailed database schema, infrastructure, encryption implementation, and token-generation algorithms.</li>
+      </ul>
+      <h3>2.4 Success Outcomes</h3>
+      <div class="meta-grid">
+        <div class="meta-card"><span class="label">User outcome</span><strong>Users can register and sign in with clear feedback.</strong></div>
+        <div class="meta-card"><span class="label">Business outcome</span><strong>Account creation follows approved identity and validation rules.</strong></div>
+        <div class="meta-card"><span class="label">Operational outcome</span><strong>Failures are understandable without exposing sensitive information.</strong></div>
+        <div class="meta-card"><span class="label">Delivery outcome</span><strong>Requirements can be traced to APIs and QA test cases.</strong></div>
+      </div>
+      <h3>2.5 Definitions</h3>
+      <table><thead><tr><th>Term</th><th>Definition</th></tr></thead><tbody>
+        <tr><td>Authentication</td><td>Process of verifying a user's identity.</td></tr>
+        <tr><td>Unverified account</td><td>An account created but not yet confirmed through the required verification process.</td></tr>
+        <tr><td>FSD</td><td>Functional Specification Document.</td></tr>
+        <tr><td>Lo-Fi</td><td>Low-fidelity wireframe used to explain screen structure and interactions.</td></tr>
+        <tr><td>API Specification</td><td>Contract describing endpoint, method, headers, request, response, status codes, and error schema.</td></tr>
+      </tbody></table>
+      <div class="page-number">3</div>
+    </section>
+
+    <section class="page section" id="context">
+      <h2>3. Business Context</h2>
+      <p>The Authentication module is the first access point for a new or returning user. It must provide a predictable journey across registration, verification, login, and password recovery.</p>
+      <h3>3.1 Business Process Summary</h3>
+      <ol>
+        <li>A new user opens the Registration screen and submits the required information.</li>
+        <li>The system validates the submitted information and checks whether the email address can be registered.</li>
+        <li>If accepted, the system creates an account in the appropriate initial status and initiates email verification when required.</li>
+        <li>The user follows the verification link and receives a clear result.</li>
+        <li>A registered, eligible user submits credentials on the Login screen.</li>
+        <li>The system validates credentials and account status, then establishes an authenticated session.</li>
+        <li>If the user cannot remember the password, they can request a reset link and set a new password.</li>
+      </ol>
+      <h3>3.2 Assumptions</h3>
+      <ul>
+        <li>Email address is the unique account identifier for this release.</li>
+        <li>Registration is open to users who meet the business eligibility criteria.</li>
+        <li>Email delivery is provided by an external or shared notification service.</li>
+        <li>Session lifetime, password policy, verification expiry, and rate limits must be confirmed with the Product Owner and Solution Architect.</li>
+        <li>Exact copy, branding, and visual styling follow the approved design system; wireframes in this FSD are structural examples only.</li>
+      </ul>
+      <h3>3.3 Dependencies</h3>
+      <table><thead><tr><th>Dependency</th><th>Expected Contribution</th><th>Owner to Confirm</th></tr></thead><tbody>
+        <tr><td>User / Identity Service</td><td>Account creation, credential validation, status management.</td><td>SA / Development</td></tr>
+        <tr><td>Email Delivery Service</td><td>Verification and password-reset messages.</td><td>SA / Development</td></tr>
+        <tr><td>Application Session</td><td>Authenticated state and logout/session expiry behavior.</td><td>SA</td></tr>
+        <tr><td>UI Design System</td><td>Reusable fields, buttons, alerts, and responsive layout.</td><td>Product / UI-UX</td></tr>
+      </tbody></table>
+      <div class="page-number">4</div>
+    </section>
+
+    <section class="page section" id="roles">
+      <h2>4. Actors & Assumptions</h2>
+      <table><thead><tr><th>Actor</th><th>Description</th><th>Permissions / Needs</th></tr></thead><tbody>
+        <tr><td>Guest User</td><td>A visitor who is not currently authenticated.</td><td>Register, login, verify email, request password reset.</td></tr>
+        <tr><td>Registered User</td><td>A user with an account.</td><td>Login if account status and credentials are valid.</td></tr>
+        <tr><td>Authentication Service</td><td>System component that validates credentials and manages authentication outcomes.</td><td>Validate requests and return agreed outcomes.</td></tr>
+        <tr><td>Email Service</td><td>Service responsible for sending account-related messages.</td><td>Send verification and password-reset emails.</td></tr>
+      </tbody></table>
+      <h3>4.1 Preconditions</h3>
+      <ul>
+        <li>The application is available and the user can access the Authentication screens.</li>
+        <li>The relevant authentication and email services are configured.</li>
+      </ul>
+      <h3>4.2 Postconditions</h3>
+      <ul>
+        <li><strong>Successful registration:</strong> an account is created in the defined initial status and any required verification is initiated.</li>
+        <li><strong>Successful login:</strong> an authenticated session is established and the user is routed to the agreed destination.</li>
+        <li><strong>Successful password reset:</strong> the new password is accepted and the user receives a clear next step.</li>
+        <li><strong>Failed action:</strong> no unintended account/session state change occurs and a safe, actionable message is displayed.</li>
+      </ul>
+      <h3>4.3 Account Lifecycle (Proposed)</h3>
+      <table><thead><tr><th>Status</th><th>Meaning</th><th>Login Behavior</th></tr></thead><tbody>
+        <tr><td>Pending Verification</td><td>Account created; verification is outstanding.</td><td>Block login or restrict access according to approved policy; show verification guidance.</td></tr>
+        <tr><td>Active</td><td>Required verification is complete and account is eligible.</td><td>Allow login when credentials are valid.</td></tr>
+        <tr><td>Locked / Disabled</td><td>Account is blocked by security or business policy.</td><td>Do not establish a session; show approved generic guidance.</td></tr>
+      </tbody></table>
+      <p class="small">The status names and exact transition rules are proposals and must be aligned with the existing identity model.</p>
+      <div class="page-number">5</div>
+    </section>
+
+    <section class="page section" id="flows">
+      <h2>5. Process Flows</h2>
+      <h3 id="login-flow">5.1 Login Flow</h3>
+      <ol>
+        <li>User opens Login screen.</li>
+        <li>User enters email and password, then selects <em>Sign in</em>.</li>
+        <li>Client validates required fields and email format.</li>
+        <li>If client validation passes, the application sends the login request.</li>
+        <li>Service validates credentials and account status.</li>
+        <li>On success, establish the authenticated session and navigate to the agreed landing page.</li>
+        <li>On failure, display the appropriate safe message and retain only non-sensitive input where appropriate.</li>
+      </ol>
+      <div class="callout"><strong>Alternative paths:</strong> invalid input → field-level validation; invalid credentials → generic authentication error; unverified account → verification guidance; locked/disabled account → approved account-status message; service unavailable → retry guidance.</div>
+      <h3 id="register-flow">5.2 Registration Flow</h3>
+      <ol>
+        <li>User selects <em>Create account</em> from Login.</li>
+        <li>User enters the required registration fields and accepts the Terms and Privacy Notice where applicable.</li>
+        <li>Client validates required fields, formats, password rules, and confirmation match.</li>
+        <li>Application submits the registration request.</li>
+        <li>Service validates business eligibility and email uniqueness, then creates the account if accepted.</li>
+        <li>If verification is required, the service initiates a verification email and the UI confirms the next step.</li>
+        <li>If registration fails, the UI displays field-level or form-level feedback without exposing internal errors.</li>
+      </ol>
+      <div class="callout"><strong>Alternative paths:</strong> email already registered → show approved guidance to sign in or reset password; invalid terms state → prevent submission; email service unavailable → follow agreed retry/resend policy without creating duplicate accounts.</div>
+      <h3 id="verify-flow">5.3 Email Verification Flow</h3>
+      <ol>
+        <li>User opens the verification link received by email.</li>
+        <li>Application validates the link with the service.</li>
+        <li>If valid and not expired, the account is marked verified and the user sees a success state.</li>
+        <li>If invalid or expired, show a clear error state and offer a safe way to request a new link.</li>
+      </ol>
+      <h3 id="reset-flow">5.4 Password Reset Flow</h3>
+      <ol>
+        <li>User selects <em>Forgot password?</em> and enters an email address.</li>
+        <li>Application submits a reset request and shows a neutral confirmation that does not reveal whether an account exists.</li>
+        <li>If eligible, the service sends a time-limited reset link.</li>
+        <li>User opens the link, enters a new password, and confirms it.</li>
+        <li>Service validates the token and password policy, updates the credential, and returns a result.</li>
+      </ol>
+      <div class="page-number">6</div>
+    </section>
+
+    <section class="page section" id="ui">
+      <h2>6. UI / Lo-Fi Specification</h2>
+      <p>The following wireframes define minimum content and interaction structure, not final visual design. Final responsive behavior and styling must follow the approved UI design system.</p>
+      <h3 id="login-ui">6.1 Login Screen — SCR-AUTH-LOGIN</h3>
+      <div class="wireframe"><div class="wf-window">
+        <div class="wf-logo">[ APPLICATION LOGO ]</div>
+        <div class="wf-title">Welcome back</div><div class="wf-help">Sign in to continue to your account.</div>
+        <div class="wf-label">Email address *</div><div class="wf-input">name@example.com</div>
+        <div class="wf-label">Password *</div><div class="wf-input">•••••••••• <span style="float:right">Show</span></div>
+        <div class="wf-row"><span>□ Remember me (optional)</span><span>Forgot password?</span></div>
+        <div class="wf-button">Sign in</div>
+        <div class="wf-foot">New here? <u>Create account</u></div>
+      </div></div>
+      <table><thead><tr><th>Element ID</th><th>Component</th><th>Behavior</th></tr></thead><tbody>
+        <tr><td>LOGIN-EMAIL</td><td>Email field</td><td>Required; validates email format; displays field-level error.</td></tr>
+        <tr><td>LOGIN-PASSWORD</td><td>Password field + show/hide</td><td>Required; masked by default; toggles visibility without changing value.</td></tr>
+        <tr><td>LOGIN-SUBMIT</td><td>Sign in button</td><td>Disabled while submitting; prevents duplicate submission.</td></tr>
+        <tr><td>LOGIN-FORGOT</td><td>Forgot password link</td><td>Opens Password Reset Request screen.</td></tr>
+        <tr><td>LOGIN-REGISTER</td><td>Create account link</td><td>Opens Registration screen.</td></tr>
+        <tr><td>LOGIN-FEEDBACK</td><td>Alert / inline feedback</td><td>Displays safe error, success, or status guidance.</td></tr>
+      </tbody></table>
+      <h3 id="register-ui">6.2 Registration Screen — SCR-AUTH-REGISTER</h3>
+      <div class="wireframe"><div class="wf-window">
+        <div class="wf-logo">[ APPLICATION LOGO ]</div>
+        <div class="wf-title">Create your account</div><div class="wf-help">Enter your details to get started.</div>
+        <div class="wf-label">Full name *</div><div class="wf-input">Your full name</div>
+        <div class="wf-label">Email address *</div><div class="wf-input">name@example.com</div>
+        <div class="wf-label">Password *</div><div class="wf-input">Create a password</div>
+        <div class="wf-label">Confirm password *</div><div class="wf-input">Re-enter your password</div>
+        <div class="wf-row"><span>□ I agree to the Terms and Privacy Notice *</span></div>
+        <div class="wf-button">Create account</div>
+        <div class="wf-foot">Already registered? <u>Sign in</u></div>
+      </div></div>
+      <table><thead><tr><th>Element ID</th><th>Component</th><th>Behavior</th></tr></thead><tbody>
+        <tr><td>REG-NAME</td><td>Full name</td><td>Required; trims leading/trailing whitespace; length/character rules to be confirmed.</td></tr>
+        <tr><td>REG-EMAIL</td><td>Email address</td><td>Required; validates format; must be unique according to account policy.</td></tr>
+        <tr><td>REG-PASSWORD</td><td>Password + policy hint</td><td>Required; masked by default; displays password requirements before submission.</td></tr>
+        <tr><td>REG-CONFIRM</td><td>Confirm password</td><td>Required; must match password exactly.</td></tr>
+        <tr><td>REG-TERMS</td><td>Terms acceptance checkbox</td><td>Required if legally/business mandated; unchecked by default.</td></tr>
+        <tr><td>REG-SUBMIT</td><td>Create account button</td><td>Validates fields and submits once; displays loading state.</td></tr>
+        <tr><td>REG-LOGIN</td><td>Sign in link</td><td>Returns user to Login screen.</td></tr>
+      </tbody></table>
+      <div class="page-number">7</div>
+    </section>
+
+    <section class="page section" id="requirements">
+      <h2>7. Functional Requirements</h2>
+      <p>Priority legend: <strong>M</strong> = Must have; <strong>S</strong> = Should have; <strong>C</strong> = Conditional / requires business confirmation.</p>
+      <h3 id="login-req">7.1 Login Requirements</h3>
+      <table><thead><tr><th>ID</th><th>Priority</th><th>Requirement</th><th>Expected Result</th></tr></thead><tbody>
+        <tr><td>FR-AUTH-LOGIN-001</td><td>M</td><td>The system shall allow a guest to enter an email address and password.</td><td>Fields are available and clearly labelled.</td></tr>
+        <tr><td>FR-AUTH-LOGIN-002</td><td>M</td><td>The system shall validate required fields and email format before submitting.</td><td>Invalid fields show inline feedback; no request is sent for client-invalid data.</td></tr>
+        <tr><td>FR-AUTH-LOGIN-003</td><td>M</td><td>The system shall submit valid credentials for authentication.</td><td>One request is made per user submission.</td></tr>
+        <tr><td>FR-AUTH-LOGIN-004</td><td>M</td><td>The system shall establish an authenticated session only when credentials and account status are accepted.</td><td>User is routed to the configured landing page.</td></tr>
+        <tr><td>FR-AUTH-LOGIN-005</td><td>M</td><td>The system shall display a safe error for failed authentication.</td><td>No password or sensitive service detail is exposed.</td></tr>
+        <tr><td>FR-AUTH-LOGIN-006</td><td>M</td><td>The system shall provide a navigation path to Registration and Password Reset.</td><td>Links open the correct screens.</td></tr>
+        <tr><td>FR-AUTH-LOGIN-007</td><td>S</td><td>The system should allow users to toggle password visibility.</td><td>Visibility changes without modifying the entered value.</td></tr>
+        <tr><td>FR-AUTH-LOGIN-008</td><td>C</td><td>The system may provide a “Remember me” option if supported by session policy.</td><td>Behavior follows the approved session specification.</td></tr>
+      </tbody></table>
+      <h3 id="register-req">7.2 Registration Requirements</h3>
+      <table><thead><tr><th>ID</th><th>Priority</th><th>Requirement</th><th>Expected Result</th></tr></thead><tbody>
+        <tr><td>FR-AUTH-REG-001</td><td>M</td><td>The system shall provide a Registration screen with all approved mandatory fields.</td><td>Field labels, required indicators, and help text are displayed.</td></tr>
+        <tr><td>FR-AUTH-REG-002</td><td>M</td><td>The system shall validate required fields, email format, password policy, and password confirmation.</td><td>Errors are shown beside the relevant field; submission is blocked until corrected.</td></tr>
+        <tr><td>FR-AUTH-REG-003</td><td>M</td><td>The system shall enforce the approved email uniqueness rule.</td><td>Duplicate registration is rejected with approved user guidance.</td></tr>
+        <tr><td>FR-AUTH-REG-004</td><td>M</td><td>The system shall create an account only when all required validations and business rules pass.</td><td>Account is created once and receives the defined initial status.</td></tr>
+        <tr><td>FR-AUTH-REG-005</td><td>M</td><td>The system shall display a confirmation after successful registration.</td><td>User is informed whether to verify email or proceed to login.</td></tr>
+        <tr><td>FR-AUTH-REG-006</td><td>C</td><td>The system shall record acceptance of the Terms and Privacy Notice when required.</td><td>Acceptance state and applicable version/timestamp are handled per approved policy.</td></tr>
+        <tr><td>FR-AUTH-REG-007</td><td>M</td><td>The system shall prevent repeated submissions while registration is processing.</td><td>Submit button shows a loading state and duplicate requests are prevented.</td></tr>
+        <tr><td>FR-AUTH-REG-008</td><td>M</td><td>The system shall not expose internal service errors or sensitive account data.</td><td>User receives safe, actionable feedback.</td></tr>
+      </tbody></table>
+      <h3 id="verification-req">7.3 Verification & Password Reset Requirements</h3>
+      <table><thead><tr><th>ID</th><th>Priority</th><th>Requirement</th><th>Expected Result</th></tr></thead><tbody>
+        <tr><td>FR-AUTH-VERIFY-001</td><td>C</td><td>The system shall validate the email verification link.</td><td>Valid links verify the account; invalid/expired links show a recovery path.</td></tr>
+        <tr><td>FR-AUTH-VERIFY-002</td><td>C</td><td>The system shall support requesting a new verification email.</td><td>Request is rate-limited and feedback does not reveal unnecessary account details.</td></tr>
+        <tr><td>FR-AUTH-RESET-001</td><td>M</td><td>The system shall allow users to request a password-reset link using an email address.</td><td>Neutral confirmation is shown regardless of whether the account exists.</td></tr>
+        <tr><td>FR-AUTH-RESET-002</td><td>M</td><td>The system shall validate reset token validity and expiry before accepting a new password.</td><td>Invalid or expired token cannot change credentials.</td></tr>
+        <tr><td>FR-AUTH-RESET-003</td><td>M</td><td>The system shall validate the new password against the approved password policy.</td><td>Invalid password is rejected with guidance.</td></tr>
+        <tr><td>FR-AUTH-RESET-004</td><td>M</td><td>The system shall confirm the outcome of a password reset.</td><td>Success message and next step are shown without exposing the credential.</td></tr>
+      </tbody></table>
+      <div class="page-number">8</div>
+    </section>
+
+    <section class="page section" id="rules">
+      <h2>8. Business Rules</h2>
+      <table><thead><tr><th>ID</th><th>Rule</th><th>Notes / Decision Required</th></tr></thead><tbody>
+        <tr><td>BR-AUTH-001</td><td>Email address is the account identifier and must follow the agreed normalization and uniqueness policy.</td><td>Confirm case sensitivity and whitespace handling.</td></tr>
+        <tr><td>BR-AUTH-002</td><td>A user must satisfy all mandatory registration validations before an account can be created.</td><td>Mandatory profile fields are subject to business approval.</td></tr>
+        <tr><td>BR-AUTH-003</td><td>Password must comply with the approved password policy.</td><td>Define minimum length, complexity/passphrase guidance, and compromised-password checks if applicable.</td></tr>
+        <tr><td>BR-AUTH-004</td><td>Confirm Password must match Password exactly.</td><td>Do not silently alter password characters.</td></tr>
+        <tr><td>BR-AUTH-005</td><td>Where email verification is enabled, a newly registered account remains Pending Verification until verification succeeds.</td><td>Confirm whether login is blocked or limited before verification.</td></tr>
+        <tr><td>BR-AUTH-006</td><td>Verification and password-reset links must be time-limited and single-use where supported.</td><td>Expiry duration and reuse behavior require SA/security confirmation.</td></tr>
+        <tr><td>BR-AUTH-007</td><td>Password-reset request confirmation must not disclose whether an email address is registered.</td><td>Apply the same user-facing confirmation for known and unknown addresses.</td></tr>
+        <tr><td>BR-AUTH-008</td><td>Authentication attempts and sensitive actions must be subject to approved abuse-prevention controls.</td><td>Thresholds and lockout/rate-limit behavior require security decision.</td></tr>
+        <tr><td>BR-AUTH-009</td><td>Successful login must route to the configured post-login destination.</td><td>Define default landing page and handling of deep links.</td></tr>
+        <tr><td>BR-AUTH-010</td><td>Terms acceptance is required only if mandated by the business/legal policy.</td><td>Confirm whether consent is required at registration and what evidence is stored.</td></tr>
+      </tbody></table>
+      <h3>8.1 Navigation Rules</h3>
+      <ul>
+        <li>Login → Create account opens Registration.</li>
+        <li>Registration → Sign in opens Login without clearing unrelated application state.</li>
+        <li>Login → Forgot password opens Password Reset Request.</li>
+        <li>Successful registration opens the registration confirmation / verification guidance state.</li>
+        <li>Successful verification opens a confirmation state with a clear next action.</li>
+      </ul>
+      <div class="page-number">9</div>
+    </section>
+
+    <section class="page section" id="data">
+      <h2>9. Data & Validation</h2>
+      <p>Field constraints below are proposed defaults for analysis. Final lengths, accepted characters, normalization rules, and password policy must be approved and mirrored in the API Specification.</p>
+      <table><thead><tr><th>Field</th><th>Required</th><th>Proposed Validation</th><th>UI Feedback</th></tr></thead><tbody>
+        <tr><td>Full Name</td><td>Yes</td><td>Trim outer whitespace; reject empty value after trimming; max length and character policy TBD.</td><td>“Enter your full name.” / approved length message.</td></tr>
+        <tr><td>Email Address</td><td>Yes</td><td>Valid email syntax; trim outer whitespace; maximum length per identity/API policy; uniqueness checked by service.</td><td>“Enter a valid email address.” / duplicate-email guidance.</td></tr>
+        <tr><td>Password</td><td>Yes</td><td>Must satisfy approved policy; do not trim or normalize silently.</td><td>Display policy hints and the unmet requirement(s).</td></tr>
+        <tr><td>Confirm Password</td><td>Yes</td><td>Must exactly match Password.</td><td>“Passwords do not match.”</td></tr>
+        <tr><td>Terms Acceptance</td><td>Conditional</td><td>Must be accepted if required; unchecked by default.</td><td>“Please accept the Terms and Privacy Notice to continue.”</td></tr>
+        <tr><td>Login Email</td><td>Yes</td><td>Valid email syntax; service validates account and credential state.</td><td>“Enter a valid email address.”</td></tr>
+        <tr><td>Login Password</td><td>Yes</td><td>Required; do not expose or persist in plaintext.</td><td>“Enter your password.”</td></tr>
+        <tr><td>Reset Token</td><td>Yes</td><td>Validated server-side for integrity, expiry, and permitted use.</td><td>Expired/invalid-link guidance.</td></tr>
+      </tbody></table>
+      <h3>9.1 Validation Timing</h3>
+      <ul>
+        <li>Required-field validation occurs on submission and may also occur after the field has been touched.</li>
+        <li>Format and confirmation checks should be shown close to the relevant field.</li>
+        <li>Server-side validation remains authoritative even when client-side validation passes.</li>
+        <li>When server validation fails, map the returned field/error code to the appropriate user-facing message.</li>
+        <li>Do not clear all form values after a recoverable error; never repopulate password fields from server responses.</li>
+      </ul>
+      <h3>9.2 Data Handling</h3>
+      <ul>
+        <li>Passwords must never be written to application logs, analytics events, or error telemetry.</li>
+        <li>Do not store reset or verification tokens in analytics or general application logs.</li>
+        <li>Capture only data required for the approved registration purpose.</li>
+      </ul>
+      <div class="page-number">10</div>
+    </section>
+
+    <section class="page section" id="interfaces">
+      <h2>10. Integration Requirements</h2>
+      <p>The exact endpoint paths, HTTP methods, schemas, status codes, token mechanism, and retry behavior must be documented in the separate API Specification and reviewed by the SA. The table below defines the required functional interface outcomes, not final endpoint contracts.</p>
+      <table><thead><tr><th>Interface ID</th><th>Purpose</th><th>Minimum Request Data</th><th>Expected Outcome</th></tr></thead><tbody>
+        <tr><td>API-AUTH-LOGIN</td><td>Authenticate user.</td><td>Email, password, and agreed client/context metadata.</td><td>Authentication result, session/token handling outcome, account status/error code.</td></tr>
+        <tr><td>API-AUTH-REGISTER</td><td>Create user account.</td><td>Full name, email, password, confirmation only if API design requires it, consent evidence if applicable.</td><td>Created account/reference, status, verification requirement, safe error code.</td></tr>
+        <tr><td>API-AUTH-VERIFY</td><td>Verify email address.</td><td>Verification token or approved token reference.</td><td>Verification outcome and account status.</td></tr>
+        <tr><td>API-AUTH-RESEND-VERIFY</td><td>Request a new verification email.</td><td>Email or account reference, according to privacy/security design.</td><td>Neutral request outcome and rate-limit information where appropriate.</td></tr>
+        <tr><td>API-AUTH-RESET-REQUEST</td><td>Request password reset.</td><td>Email address.</td><td>Neutral confirmation; no account-existence disclosure.</td></tr>
+        <tr><td>API-AUTH-RESET-COMPLETE</td><td>Set a new password.</td><td>Reset token, new password, and any agreed confirmation field.</td><td>Reset outcome and safe error code.</td></tr>
+      </tbody></table>
+      <h3>10.1 API Contract Requirements</h3>
+      <ul>
+        <li>Define method, path, authentication requirements, headers, content type, and idempotency/retry expectations.</li>
+        <li>Define field name, data type, required/optional status, length/format constraints, normalization, and example for each request property.</li>
+        <li>Define success response schema and error response schema, including stable machine-readable error codes and user-facing message mapping.</li>
+        <li>Define HTTP status codes and behavior for validation errors, duplicates, invalid credentials, expired links, rate limiting, and service failure.</li>
+        <li>Define token/session handling and the response behavior for Pending Verification, Active, and Locked/Disabled accounts.</li>
+        <li>Do not return password values, raw secrets, or unnecessary personal data in any response.</li>
+      </ul>
+      <div class="callout"><strong>Ownership:</strong> BA specifies business meaning, required data, validation rules, and expected outcomes. SA confirms endpoint design, security controls, and technical contract. Developer implements the approved contract. QA validates behavior against this FSD and the versioned API Specification.</div>
+      <div class="page-number">11</div>
+    </section>
+
+    <section class="page section" id="errors">
+      <h2>11. Error Handling & Screen States</h2>
+      <table><thead><tr><th>Scenario</th><th>Screen Behavior</th><th>Notes</th></tr></thead><tbody>
+        <tr><td>Required field missing</td><td>Inline field error; keep the screen open.</td><td>Focus or scroll to the first invalid field where accessible.</td></tr>
+        <tr><td>Invalid email format</td><td>Inline format guidance.</td><td>Do not submit the request.</td></tr>
+        <tr><td>Incorrect login credentials</td><td>Generic authentication failure message.</td><td>Avoid revealing whether the email or password was incorrect.</td></tr>
+        <tr><td>Account pending verification</td><td>Show approved verification guidance and resend option if enabled.</td><td>Exact login restriction must be confirmed.</td></tr>
+        <tr><td>Email already registered</td><td>Show approved next step such as sign in or reset password.</td><td>Confirm privacy/security wording with the Product Owner.</td></tr>
+        <tr><td>Verification/reset link expired</td><td>Explain that the link is no longer valid and provide a recovery action.</td><td>Do not accept expired token.</td></tr>
+        <tr><td>Rate limit reached</td><td>Show retry guidance without exposing security thresholds.</td><td>Respect any retry-after information in the approved contract.</td></tr>
+        <tr><td>Network/service failure</td><td>Show a generic service error and retry guidance.</td><td>Preserve non-sensitive values where safe; avoid duplicate submission.</td></tr>
+        <tr><td>Unexpected error</td><td>Show a generic fallback message and provide support path if applicable.</td><td>Technical details belong in protected logs, not the UI.</td></tr>
+      </tbody></table>
+      <h3>11.1 Required UI States</h3>
+      <div class="two-col">
+        <div class="mini-card"><h4>Default</h4><p>All fields are ready for input; no error is displayed.</p></div>
+        <div class="mini-card"><h4>Validation Error</h4><p>Invalid fields are identified with text, not color alone.</p></div>
+        <div class="mini-card"><h4>Submitting</h4><p>Primary action indicates progress and prevents duplicate submission.</p></div>
+        <div class="mini-card"><h4>Success</h4><p>Outcome and next step are clear; avoid ambiguous completion messaging.</p></div>
+        <div class="mini-card"><h4>Service Error</h4><p>Generic message with a safe retry path.</p></div>
+        <div class="mini-card"><h4>Expired / Invalid Link</h4><p>Explain the issue and offer a way to restart the relevant process.</p></div>
+      </div>
+      <div class="page-number">12</div>
+    </section>
+
+    <section class="page section" id="security">
+      <h2>12. Security & Non-Functional Requirements</h2>
+      <table><thead><tr><th>ID</th><th>Requirement</th><th>Acceptance Evidence</th></tr></thead><tbody>
+        <tr><td>NFR-AUTH-001</td><td>All authentication and account-recovery traffic must use secure transport.</td><td>Verified through environment/security review.</td></tr>
+        <tr><td>NFR-AUTH-002</td><td>Passwords and reset/verification tokens must not be exposed in UI telemetry, logs, or analytics.</td><td>Code/configuration review and security testing.</td></tr>
+        <tr><td>NFR-AUTH-003</td><td>Authentication and recovery actions must apply approved rate-limiting and abuse controls.</td><td>SA/security-approved thresholds and QA tests.</td></tr>
+        <tr><td>NFR-AUTH-004</td><td>User-facing errors must not reveal credentials, internal implementation details, or unnecessary account-existence information.</td><td>Error-state tests pass.</td></tr>
+        <tr><td>NFR-AUTH-005</td><td>Authentication screens must support the approved responsive breakpoints.</td><td>Verified on supported viewport sizes and devices.</td></tr>
+        <tr><td>NFR-AUTH-006</td><td>Fields, labels, error messages, and keyboard interactions must meet the agreed accessibility standard.</td><td>Keyboard and accessibility checks completed.</td></tr>
+        <tr><td>NFR-AUTH-007</td><td>Loading, success, and failure states must provide timely feedback without duplicate actions.</td><td>Functional and usability tests pass.</td></tr>
+        <tr><td>NFR-AUTH-008</td><td>Authentication events may be audited using approved event metadata, excluding secrets.</td><td>Audit event scope approved by security/business owner.</td></tr>
+      </tbody></table>
+      <h3>12.1 Performance and Availability</h3>
+      <p>Target response times, service availability, timeout thresholds, and retry strategy must follow the project’s agreed non-functional standards. The SA should document the measurable targets in the Technical Design or NFR catalogue and reference them here.</p>
+      <h3>12.2 Accessibility and Usability</h3>
+      <ul>
+        <li>Every input has a programmatic and visible label.</li>
+        <li>Errors are described in text and associated with the relevant input.</li>
+        <li>Keyboard focus order is logical; focus is visible.</li>
+        <li>Password visibility toggle is keyboard-operable and has an accessible name/state.</li>
+        <li>Buttons show disabled/loading states and do not rely on color alone to communicate status.</li>
+      </ul>
+      <div class="warning"><strong>Security decisions requiring explicit approval:</strong> password policy, lockout/rate-limit strategy, verification and reset link expiry, session lifetime, token storage/rotation, MFA requirement, and account-enumeration handling.</div>
+      <div class="page-number">13</div>
+    </section>
+
+    <section class="page section" id="acceptance">
+      <h2>13. Acceptance Criteria</h2>
+      <p>These criteria are written to be testable and should be converted into detailed QA test cases. “Given / When / Then” scenarios describe expected behavior without prescribing internal implementation.</p>
+      <h3>13.1 Login</h3>
+      <table><thead><tr><th>ID</th><th>Given</th><th>When</th><th>Then</th></tr></thead><tbody>
+        <tr><td>AC-LOGIN-01</td><td>A guest is on Login.</td><td>They submit with required fields empty.</td><td>Required-field errors appear and no authentication request is sent.</td></tr>
+        <tr><td>AC-LOGIN-02</td><td>A guest enters a valid email format and an incorrect password.</td><td>They submit the form.</td><td>No session is established and a safe generic error is shown.</td></tr>
+        <tr><td>AC-LOGIN-03</td><td>A user has an Active account and valid credentials.</td><td>They submit the form.</td><td>Authentication succeeds and the configured landing page is displayed.</td></tr>
+        <tr><td>AC-LOGIN-04</td><td>A user has a Pending Verification account.</td><td>They submit valid credentials.</td><td>The system follows the approved pending-verification policy and displays the relevant guidance.</td></tr>
+      </tbody></table>
+      <h3>13.2 Registration</h3>
+      <table><thead><tr><th>ID</th><th>Given</th><th>When</th><th>Then</th></tr></thead><tbody>
+        <tr><td>AC-REG-01</td><td>A guest is on Registration.</td><td>They submit missing or invalid fields.</td><td>Field-level errors are shown and account creation does not proceed.</td></tr>
+        <tr><td>AC-REG-02</td><td>The password and confirmation differ.</td><td>The user submits the form.</td><td>The confirmation field shows an error and the request is not submitted.</td></tr>
+        <tr><td>AC-REG-03</td><td>The email is already registered.</td><td>The user submits otherwise valid data.</td><td>No duplicate account is created and approved guidance is shown.</td></tr>
+        <tr><td>AC-REG-04</td><td>All required values are valid and the email is available.</td><td>The user submits once.</td><td>One account is created, the initial status is applied, and the correct confirmation is displayed.</td></tr>
+        <tr><td>AC-REG-05</td><td>A registration request is in progress.</td><td>The user clicks Create account repeatedly.</td><td>Duplicate submission is prevented at UI level and account creation remains consistent.</td></tr>
+      </tbody></table>
+      <h3>13.3 Verification & Password Reset</h3>
+      <table><thead><tr><th>ID</th><th>Given</th><th>When</th><th>Then</th></tr></thead><tbody>
+        <tr><td>AC-VERIFY-01</td><td>A valid, unexpired verification link exists.</td><td>The user opens it.</td><td>The account is verified and success guidance is shown.</td></tr>
+        <tr><td>AC-VERIFY-02</td><td>A verification link is expired or invalid.</td><td>The user opens it.</td><td>Verification is not completed and a recovery action is offered.</td></tr>
+        <tr><td>AC-RESET-01</td><td>A user requests a reset for any email address.</td><td>The request is submitted.</td><td>The same neutral confirmation is shown regardless of account existence.</td></tr>
+        <tr><td>AC-RESET-02</td><td>A reset token is expired or invalid.</td><td>The user submits a new password.</td><td>The password is not changed and safe recovery guidance is displayed.</td></tr>
+        <tr><td>AC-RESET-03</td><td>A valid reset token and compliant new password are supplied.</td><td>The user submits the form.</td><td>The password is updated and a success confirmation is displayed.</td></tr>
+      </tbody></table>
+      <div class="page-number">14</div>
+    </section>
+
+    <section class="page section" id="traceability">
+      <h2>14. Traceability Matrix</h2>
+      <p>This matrix links business-facing requirements to the screen, interface, and QA evidence. The final API IDs and test-case IDs should be updated when the related artefacts are baselined.</p>
+      <table><thead><tr><th>Requirement</th><th>Screen / Flow</th><th>Interface</th><th>Acceptance Criteria</th><th>QA Test ID</th></tr></thead><tbody>
+        <tr><td>FR-AUTH-LOGIN-001–002</td><td>SCR-AUTH-LOGIN</td><td>N/A — client validation</td><td>AC-LOGIN-01</td><td>TBD</td></tr>
+        <tr><td>FR-AUTH-LOGIN-003–005</td><td>SCR-AUTH-LOGIN</td><td>API-AUTH-LOGIN</td><td>AC-LOGIN-02–04</td><td>TBD</td></tr>
+        <tr><td>FR-AUTH-REG-001–002</td><td>SCR-AUTH-REGISTER</td><td>N/A — client validation</td><td>AC-REG-01–02</td><td>TBD</td></tr>
+        <tr><td>FR-AUTH-REG-003–005</td><td>SCR-AUTH-REGISTER</td><td>API-AUTH-REGISTER</td><td>AC-REG-03–04</td><td>TBD</td></tr>
+        <tr><td>FR-AUTH-REG-007</td><td>SCR-AUTH-REGISTER</td><td>API-AUTH-REGISTER</td><td>AC-REG-05</td><td>TBD</td></tr>
+        <tr><td>FR-AUTH-VERIFY-001–002</td><td>SCR-AUTH-VERIFY</td><td>API-AUTH-VERIFY / RESEND</td><td>AC-VERIFY-01–02</td><td>TBD</td></tr>
+        <tr><td>FR-AUTH-RESET-001</td><td>SCR-AUTH-RESET-REQUEST</td><td>API-AUTH-RESET-REQUEST</td><td>AC-RESET-01</td><td>TBD</td></tr>
+        <tr><td>FR-AUTH-RESET-002–004</td><td>SCR-AUTH-RESET-COMPLETE</td><td>API-AUTH-RESET-COMPLETE</td><td>AC-RESET-02–03</td><td>TBD</td></tr>
+        <tr><td>NFR-AUTH-002, 004</td><td>All Authentication screens</td><td>All Authentication interfaces</td><td>Relevant security/error criteria</td><td>TBD</td></tr>
+      </tbody></table>
+      <h3>14.1 Change Impact Rule</h3>
+      <p>Any approved change to a functional requirement must be assessed for impact on screen behavior, API contract, business rules, acceptance criteria, and QA test cases. The document owner updates the traceability matrix before the change is baselined.</p>
+      <div class="page-number">15</div>
+    </section>
+
+    <section class="page section" id="open-items">
+      <h2>15. Open Items & Approvals</h2>
+      <h3>15.1 Decisions Required Before Baseline</h3>
+      <table><thead><tr><th>ID</th><th>Decision / Open Item</th><th>Suggested Owner</th><th>Status</th></tr></thead><tbody>
+        <tr><td>OI-AUTH-01</td><td>Confirm required registration fields (e.g., full name only or additional profile data).</td><td>Product Owner / BA</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-02</td><td>Confirm whether email verification is mandatory and whether login is blocked before verification.</td><td>Product Owner</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-03</td><td>Approve password policy and field-level validation messages.</td><td>Security / SA / Product Owner</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-04</td><td>Confirm verification and reset link expiry, single-use behavior, and resend limits.</td><td>SA / Security</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-05</td><td>Confirm account lockout, rate limiting, and abuse-prevention rules.</td><td>Security / SA</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-06</td><td>Confirm session model, “Remember me” behavior, and post-login landing page.</td><td>Product Owner / SA</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-07</td><td>Confirm Terms / Privacy consent requirement and evidence retention.</td><td>Legal / Product Owner</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-08</td><td>Confirm API endpoint design, payloads, response schemas, status codes, and error-code mapping.</td><td>SA with BA</td><td>Open</td></tr>
+        <tr><td>OI-AUTH-09</td><td>Confirm supported browsers, devices, accessibility standard, and NFR targets.</td><td>Product / SA / QA</td><td>Open</td></tr>
+      </tbody></table>
+      <h3>15.2 Approval Record</h3>
+      <table><thead><tr><th>Approver Role</th><th>Name</th><th>Decision</th><th>Date</th></tr></thead><tbody>
+        <tr><td>Business Owner / Product Owner</td><td>TBD</td><td>Pending</td><td>TBD</td></tr>
+        <tr><td>Solution Architect</td><td>TBD</td><td>Pending</td><td>TBD</td></tr>
+        <tr><td>QA Lead</td><td>TBD</td><td>Pending</td><td>TBD</td></tr>
+      </tbody></table>
+      <div class="footer-note">End of main document. Open items must be resolved or explicitly accepted before the FSD is baselined for delivery.</div>
+      <div class="page-number">16</div>
+    </section>
+
+    <section class="page section" id="appendix">
+      <h2>Appendix A. API Handoff Checklist</h2>
+      <p>Use this checklist during BA–SA refinement to ensure the functional interface is complete before development begins.</p>
+      <table><thead><tr><th>Check</th><th>Required Detail</th><th>Owner</th></tr></thead><tbody>
+        <tr><td>□</td><td>Endpoint name, path, HTTP method, content type, authentication, and required headers.</td><td>SA</td></tr>
+        <tr><td>□</td><td>Request payload: property name, type, required/optional, nullability, format, length, constraints, normalization, and example.</td><td>BA + SA</td></tr>
+        <tr><td>□</td><td>Response payload: success schema, data meaning, status, and fields required by the UI.</td><td>BA + SA</td></tr>
+        <tr><td>□</td><td>Error schema: stable error code, HTTP status, field-level errors, user-facing message mapping, and retry guidance.</td><td>BA + SA</td></tr>
+        <tr><td>□</td><td>Scenarios for duplicate email, invalid credentials, pending/disabled account, expired token, rate limit, timeout, and dependency failure.</td><td>BA + SA + QA</td></tr>
+        <tr><td>□</td><td>Security: secrets excluded from responses/logs, token lifetime and use, rate limits, and enumeration protection.</td><td>SA + Security</td></tr>
+        <tr><td>□</td><td>Idempotency, duplicate-submit behavior, retry safety, and consistency after partial failures.</td><td>SA + Developer</td></tr>
+        <tr><td>□</td><td>Contract version, examples, ownership, approval, and change-control approach.</td><td>SA + BA</td></tr>
+        <tr><td>□</td><td>Each interface requirement is mapped to acceptance criteria and at least one QA scenario.</td><td>BA + QA</td></tr>
+      </tbody></table>
+      <h3>Appendix B. Suggested Deliverable Ownership</h3>
+      <table><thead><tr><th>Artefact</th><th>Primary Owner</th><th>Key Contributors</th><th>Purpose</th></tr></thead><tbody>
+        <tr><td>FSD</td><td>BA (internal)</td><td>Product Owner, SA, QA</td><td>Functional behavior, business rules, validations, UI behavior, acceptance criteria, traceability.</td></tr>
+        <tr><td>Lo-Fi / UI Specification</td><td>BA or UI/UX</td><td>Product Owner, Developer, QA</td><td>Screen structure, components, interactions, and states.</td></tr>
+        <tr><td>API Specification</td><td>Joint BA–SA; SA validates technical contract</td><td>Developer, QA</td><td>Exact request/response schema, error codes, status codes, and interface behavior.</td></tr>
+        <tr><td>Technical Design</td><td>SA (outsourced)</td><td>Developer, Security</td><td>Architecture, sequence, data model, security implementation, and technology choices.</td></tr>
+        <tr><td>Test Specification</td><td>QA (outsourced)</td><td>BA, SA, Developer</td><td>Test scenarios, detailed test cases, and requirement coverage.</td></tr>
+      </tbody></table>
+      <div class="callout"><strong>Baseline recommendation:</strong> Approve this FSD only after the open business decisions are resolved, the SA has reviewed feasibility and security implications, and the API Specification can be traced to the requirements in Sections 7–10.</div>
+      <div class="page-number">17</div>
+    </section>
+  </main>
+</div>
+<script>
+  const links = [...document.querySelectorAll('#toc a')];
+  const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+      }
+    });
+  }, { rootMargin: '-15% 0px -70% 0px' });
+  targets.forEach(target => observer.observe(target));
+</script>
+</body>
+</html>
