@@ -58,4 +58,3 @@ export function Modal({ isOpen, onClose, title, description, children, maxWidth 
     </div>
   );
 }
-

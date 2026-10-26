@@ -256,6 +256,7 @@ export function RequirementsSection({
               Nama Requirement <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Otentikasi Email dan Password"

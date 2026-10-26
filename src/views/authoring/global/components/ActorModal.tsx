@@ -53,6 +53,7 @@ export function ActorModal({
             Nama Aktor / Role <span className="text-red-500">*</span>
           </label>
           <input
+            autoFocus
             type="text"
             required
             placeholder="Contoh: Customer, Finance Admin, System Cron"

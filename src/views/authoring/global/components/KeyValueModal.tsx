@@ -55,6 +55,7 @@ export function KeyValueModal({
             {labelTitle} <span className="text-red-500">*</span>
           </label>
           <input
+            autoFocus
             type="text"
             required
             placeholder={labelPlaceholder}

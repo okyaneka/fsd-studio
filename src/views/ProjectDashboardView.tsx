@@ -329,6 +329,7 @@ export function ProjectDashboardView({
               Nama Project <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: HRIS Portal Employee, E-Commerce Mobile"
@@ -426,6 +427,7 @@ export function ProjectDashboardView({
               Nama Project <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               value={editName}
@@ -530,6 +532,7 @@ export function ProjectDashboardView({
               Ketik <strong>{deletingProject?.name}</strong> di bawah untuk mengonfirmasi:
             </p>
             <input
+              autoFocus
               type="text"
               placeholder={deletingProject?.name}
               value={deleteConfirmText}

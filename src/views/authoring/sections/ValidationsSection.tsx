@@ -279,6 +279,7 @@ export function ValidationsSection({
                 Nama Field / Input <span className="text-red-500">*</span>
               </label>
               <input
+                autoFocus
                 type="text"
                 required
                 placeholder="Contoh: email, password"

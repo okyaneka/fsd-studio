@@ -340,6 +340,7 @@ export function ProjectDetailView({
               Judul FSD <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Modul Checkout & Payment Gateway"
@@ -435,6 +436,7 @@ export function ProjectDetailView({
               Judul FSD <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               value={editTitle}

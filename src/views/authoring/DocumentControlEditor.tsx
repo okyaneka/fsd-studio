@@ -494,6 +494,7 @@ export function DocumentControlEditor({ fsd, onChange }: DocumentControlEditorPr
                 Versi <span className="text-red-500">*</span>
               </label>
               <input
+                autoFocus
                 type="text"
                 required
                 placeholder="Contoh: 1.0"
@@ -573,6 +574,7 @@ export function DocumentControlEditor({ fsd, onChange }: DocumentControlEditorPr
               Nama Dokumen <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Business Requirements Document (BRD)"

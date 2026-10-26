@@ -440,6 +440,7 @@ export function OpenItemsApprovalEditor({ fsd, onChange }: OpenItemsApprovalEdit
               Nama Isu / Kebutuhan Tertunda <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Keputusan Provider Payment Gateway"
@@ -536,6 +537,7 @@ export function OpenItemsApprovalEditor({ fsd, onChange }: OpenItemsApprovalEdit
                 Peran / Jabatan <span className="text-red-500">*</span>
               </label>
               <input
+                autoFocus
                 type="text"
                 required
                 placeholder="Contoh: Product Owner"
@@ -618,6 +620,7 @@ export function OpenItemsApprovalEditor({ fsd, onChange }: OpenItemsApprovalEdit
               Item Checklist <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Endpoint Auth Swagger terdokumentasi"

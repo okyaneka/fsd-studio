@@ -321,6 +321,7 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
                 Nama Alur Proses <span className="text-red-500">*</span>
               </label>
               <input
+                autoFocus
                 type="text"
                 required
                 placeholder="Contoh: Login Pengguna Biasa"
@@ -481,6 +482,7 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
               Nama Fitur <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Login, Registrasi, Forgot Password, Logout"

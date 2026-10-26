@@ -191,6 +191,7 @@ export function BusinessRulesSection({
               Nama Aturan Bisnis <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Penguncian Akun Setelah 5 Kali Gagal"

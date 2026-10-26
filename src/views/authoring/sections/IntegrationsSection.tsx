@@ -202,6 +202,7 @@ export function IntegrationsSection({
                 Nama Integrasi <span className="text-red-500">*</span>
               </label>
               <input
+                autoFocus
                 type="text"
                 required
                 placeholder="Contoh: Single Sign-On Google OAuth"

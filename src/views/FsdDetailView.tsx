@@ -605,6 +605,7 @@ export function FsdDetailView({
               Nama Modul <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Checkout, Payment Gateway, User Profile"
@@ -675,6 +676,7 @@ export function FsdDetailView({
               Nama Modul <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               value={editModName}

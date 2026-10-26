@@ -270,6 +270,7 @@ export function ScreensSection({
               Nama Layar <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Halaman Login"

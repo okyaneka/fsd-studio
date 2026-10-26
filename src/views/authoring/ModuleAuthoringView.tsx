@@ -32,15 +32,15 @@ const SECTION_KEYS: ModuleSection[] = [
 ];
 
 const SECTION_TITLES: Record<ModuleSection, string> = {
-  flows: '1. Process Flows',
-  screens: '2. UI & Lo-Fi Wireframes',
-  requirements: '3. Functional Requirements',
-  businessRules: '4. Business Rules',
-  validations: '5. Data & Validation Rules',
-  integrations: '6. Integration Requirements',
-  errorStates: '7. Error Handling & UI States',
-  nfrs: '8. Security & NFR',
-  acceptanceCriteria: '9. Acceptance Criteria (GWT)',
+  flows: '[FLOW] - Process Flows', // 1
+  screens: '[UI] UI & Lo-Fi Wireframes', // 2
+  requirements: '[FR] Functional Requirements', // 3
+  businessRules: '[BR] Business Rules', // 4
+  validations: '[VAL] Data & Validation Rules', // 5
+  integrations: '[INT] Integration Requirements', // 6
+  errorStates: '[ERR] Error Handling & UI States', // 7
+  nfrs: '[SEC] Security & NFR', // 8
+  acceptanceCriteria: '[ACC] Acceptance Criteria (GWT)', // 9
 };
 
 export function ModuleAuthoringView({

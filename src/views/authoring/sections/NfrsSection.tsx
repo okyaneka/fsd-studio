@@ -206,6 +206,7 @@ export function NfrsSection({
                 Nama Kebutuhan <span className="text-red-500">*</span>
               </label>
               <input
+                autoFocus
                 type="text"
                 required
                 placeholder="Contoh: Waktu Respon Login"

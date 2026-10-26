@@ -197,6 +197,7 @@ export function ErrorStatesSection({
               Nama Kondisi Error <span className="text-red-500">*</span>
             </label>
             <input
+              autoFocus
               type="text"
               required
               placeholder="Contoh: Kredensial Tidak Cocok"
