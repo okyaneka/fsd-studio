@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import type { FsdDocument, FsdModule, Flow, FlowStep, SectionState } from '../../../core/types';
 import { createArtifactId } from '../../../core/schema';
-import { PlusIcon, TrashIcon, EditIcon } from '../../../components/Icons';
+import { PlusIcon, TrashIcon, EditIcon, DuplicateIcon } from '../../../components/Icons';
 import { Modal } from '../../../components/Modal';
+import { SectionStatusBadge } from '../components/SectionStatusBadge';
 
 interface FlowsSectionProps {
   fsd: FsdDocument;
@@ -26,6 +27,7 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
 
   const displayedFlows = useMemo(() => {
     if (selectedFlowFeatureFilter === 'all') return module.flows;
+    if (selectedFlowFeatureFilter === '__none__') return module.flows.filter((f) => !f.feature);
     return module.flows.filter((f) => f.feature === selectedFlowFeatureFilter);
   }, [module.flows, selectedFlowFeatureFilter]);
 
@@ -55,6 +57,12 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
   const [flowDesc, setFlowDesc] = useState('');
   const [flowNotes, setFlowNotes] = useState('');
   const [flowSteps, setFlowSteps] = useState<FlowStep[]>([]);
+
+  // Modal states for Duplicate Flow
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [sourceFlow, setSourceFlow] = useState<Flow | null>(null);
+  const [duplicateFlowName, setDuplicateFlowName] = useState('');
+  const [duplicateFlowFeature, setDuplicateFlowFeature] = useState('');
 
   const updateSectionState = (state: SectionState) => {
     onUpdateModule({
@@ -138,41 +146,145 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
     onUpdateModule({ ...module, flows: updated });
   };
 
+  const handleOpenDuplicateFlow = (flow: Flow) => {
+    setSourceFlow(flow);
+    setDuplicateFlowName(`${flow.name} (Copy)`);
+    setDuplicateFlowFeature(flow.feature || '');
+    setDuplicateModalOpen(true);
+  };
+
+  const handleConfirmDuplicateFlow = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!sourceFlow || !duplicateFlowName.trim()) return;
+
+    const newSeq = module.flows.length + 1;
+    let generatedId = createArtifactId(
+      'flow',
+      module.code,
+      newSeq,
+      duplicateFlowName.trim(),
+      fsd.idConvention
+    );
+
+    // Pastikan tidak ada duplikasi ID jika namanya menghasilkan slug yang sama
+    if (module.flows.some((f) => f.id === generatedId)) {
+      let counter = 2;
+      while (module.flows.some((f) => f.id === `${generatedId}-${counter}`)) {
+        counter++;
+      }
+      generatedId = `${generatedId}-${counter}`;
+    }
+
+    const trimmedFeature = duplicateFlowFeature.trim() || undefined;
+    const currentFeatures = module.features || [];
+    const nextFeatures =
+      trimmedFeature && !currentFeatures.includes(trimmedFeature)
+        ? [...currentFeatures, trimmedFeature]
+        : currentFeatures;
+
+    // Duplikasi langkah-langkah alur secara mendalam (deep copy)
+    const duplicatedSteps: FlowStep[] = (sourceFlow.steps || []).map((step) => ({
+      order: step.order,
+      actor: step.actor,
+      action: step.action,
+      systemResponse: step.systemResponse,
+      requirementIds: [...(step.requirementIds || [])],
+    }));
+
+    const duplicatedFlow: Flow = {
+      id: generatedId,
+      name: duplicateFlowName.trim(),
+      description: sourceFlow.description,
+      notes: sourceFlow.notes,
+      steps: duplicatedSteps,
+      alternativePaths: (sourceFlow.alternativePaths || []).map((ap) => ({ ...ap })),
+      feature: trimmedFeature,
+    };
+
+    onUpdateModule({
+      ...module,
+      flows: [...module.flows, duplicatedFlow],
+      features: nextFeatures,
+      sectionStates: {
+        ...module.sectionStates,
+        flows: module.sectionStates.flows === 'empty' ? 'in-progress' : module.sectionStates.flows,
+      },
+    });
+
+    setDuplicateModalOpen(false);
+    setSourceFlow(null);
+  };
+
   return (
     <div className="space-y-6">
       {/* Sub-section Header & Status Controller */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
           <h3 className="text-lg font-bold text-slate-900">1. Process Flows</h3>
           <p className="text-xs text-slate-500 mt-0.5">
             Bagian wajib standar spesifikasi fungsional FSD.
           </p>
+          <SectionStatusBadge
+            status={module.sectionStates.flows}
+            onChange={(newStatus) => {
+              onUpdateModule({
+                ...module,
+                sectionStates: {
+                  ...module.sectionStates,
+                  flows: newStatus,
+                },
+              });
+            }}
+          />
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="font-semibold text-slate-600">Status Subbagian:</span>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Filter Kategori (Select View) */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="font-semibold text-slate-600 whitespace-nowrap">Kategori:</span>
             <select
-              value={module.sectionStates.flows}
-              onChange={(e) => updateSectionState(e.target.value as SectionState)}
-              className="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+              value={selectedFlowFeatureFilter}
+              onChange={(e) => setSelectedFlowFeatureFilter(e.target.value)}
+              className="px-2.5 py-1.5 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white font-medium text-slate-700 min-w-[140px]"
             >
-              <option value="empty">Kosong (Empty)</option>
-              <option value="in-progress">In-Progress</option>
-              <option value="complete">Selesai (Complete)</option>
-              <option value="tbd">TBD (To Be Decided)</option>
-              <option value="not-applicable">Not Applicable (N/A)</option>
+              <option value="all">Semua Kategori ({module.flows.length})</option>
+              {allFeatures.map((feat) => {
+                const count = module.flows.filter((f) => f.feature === feat).length;
+                return (
+                  <option key={feat} value={feat}>
+                    {feat} ({count})
+                  </option>
+                );
+              })}
+              {module.flows.some((f) => !f.feature) && (
+                <option value="__none__">
+                  Tanpa Kategori ({module.flows.filter((f) => !f.feature).length})
+                </option>
+              )}
             </select>
           </div>
 
-          <button
-            type="button"
-            onClick={handleOpenAddFlow}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs cursor-pointer"
-          >
-            <PlusIcon className="w-3.5 h-3.5" />
-            Tambah Flow
-          </button>
+          {/* Action Buttons: Tambah Kategori di samping Tambah Flow */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAddFeatureModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors cursor-pointer"
+              title="Tambah Kategori Fitur Alur Baru"
+            >
+              <PlusIcon className="w-3.5 h-3.5" />
+              <span>Tambah Kategori</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenAddFlow}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs cursor-pointer"
+            >
+              <PlusIcon className="w-3.5 h-3.5" />
+              <span>Tambah Flow</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -188,49 +300,6 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
         </div>
       )}
 
-      {/* Feature Filter Bar khusus untuk Alur Proses */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
-        <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
-          <span className="text-xs font-bold text-slate-700 whitespace-nowrap mr-1">
-            Kategori Fitur:
-          </span>
-          <button
-            type="button"
-            onClick={() => setSelectedFlowFeatureFilter('all')}
-            className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-              selectedFlowFeatureFilter === 'all'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-            }`}
-          >
-            Semua Alur ({module.flows.length})
-          </button>
-          {allFeatures.map((feat) => (
-            <button
-              key={feat}
-              type="button"
-              onClick={() => setSelectedFlowFeatureFilter(feat)}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap ${
-                selectedFlowFeatureFilter === feat
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-              }`}
-            >
-              {feat}
-            </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsAddFeatureModalOpen(true)}
-          className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-white hover:bg-blue-50 border border-blue-200 rounded-md transition-colors cursor-pointer shrink-0"
-        >
-          <PlusIcon className="w-3.5 h-3.5" />
-          <span>Tambah Kategori Fitur</span>
-        </button>
-      </div>
-
       {displayedFlows.length === 0 ? (
         <p className="text-xs text-slate-400 py-6 italic text-center">
           Belum ada alur proses {selectedFlowFeatureFilter !== 'all' ? `untuk fitur "${selectedFlowFeatureFilter}"` : ''} yang didefinisikan.
@@ -242,21 +311,29 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
             return (
               <div key={flow.id} className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
+                  <div className='flex flex-col gap-1'>
+                    <h4 className="text-sm font-bold text-slate-900">{flow.name}</h4>
                     <div className="flex items-center gap-2">
                       <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
                         {flow.id}
                       </span>
                       {flow.feature && (
-                        <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded">
-                          Fitur: {flow.feature}
+                        <span className="text-[10px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded">
+                          {flow.feature}
                         </span>
                       )}
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-1">{flow.name}</h4>
-                    {flow.description && <p className="text-xs text-slate-600 mt-0.5">{flow.description}</p>}
+                    {flow.description && <p className="text-xs text-slate-600">{flow.description}</p>}
                   </div>
                   <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenDuplicateFlow(flow)}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 rounded cursor-pointer"
+                      title="Duplikat Flow"
+                    >
+                      <DuplicateIcon className="w-4 h-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => handleOpenEditFlow(actualIdx)}
@@ -505,6 +582,71 @@ export function FlowsSection({ fsd, module, onUpdateModule }: FlowsSectionProps)
               className="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer"
             >
               Simpan Fitur
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Modal: Duplikat Flow */}
+      <Modal
+        isOpen={duplicateModalOpen}
+        onClose={() => setDuplicateModalOpen(false)}
+        title="Duplikat Alur Proses"
+        description={`Menduplikasi alur "${sourceFlow?.name}" beserta seluruh ${sourceFlow?.steps?.length || 0} langkahnya.`}
+      >
+        <form onSubmit={handleConfirmDuplicateFlow} className="space-y-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Nama Alur Proses Baru <span className="text-red-500">*</span>
+            </label>
+            <input
+              autoFocus
+              type="text"
+              required
+              placeholder="Contoh: Login Pengguna Admin"
+              value={duplicateFlowName}
+              onChange={(e) => setDuplicateFlowName(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <p className="text-[11px] text-slate-500 mt-1">
+              Kode alur proses baru akan digenerate secara otomatis berdasarkan nama ini.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Kategori / Fitur Alur
+            </label>
+            <select
+              value={duplicateFlowFeature}
+              onChange={(e) => setDuplicateFlowFeature(e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            >
+              <option value="">Tanpa Kategori (Umum)</option>
+              {allFeatures.map((feat) => (
+                <option key={feat} value={feat}>
+                  {feat}
+                </option>
+              ))}
+              {duplicateFlowFeature && !allFeatures.includes(duplicateFlowFeature) && (
+                <option value={duplicateFlowFeature}>{duplicateFlowFeature}</option>
+              )}
+            </select>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setDuplicateModalOpen(false)}
+              className="px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+            >
+              Duplikat Alur
             </button>
           </div>
         </form>

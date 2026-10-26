@@ -1,5 +1,10 @@
 import { useState } from 'react';
-import type { FsdDocument, FsdModule, ModuleSection } from '../../core/types';
+import type {
+  FsdDocument,
+  FsdModule,
+  ModuleSection,
+  SectionState,
+} from '../../core/types';
 import { ArrowLeftIcon } from '../../components/Icons';
 import { FlowsSection } from './sections/FlowsSection';
 import { ScreensSection } from './sections/ScreensSection';
@@ -69,10 +74,14 @@ export function ModuleAuthoringView({
             <span className="text-xs font-mono font-bold bg-slate-900 text-white px-2.5 py-0.5 rounded">
               MOD-{module.code}
             </span>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">{module.name}</h2>
+            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+              {module.name}
+            </h2>
           </div>
           {module.description && (
-            <p className="text-xs text-slate-600 mt-1 max-w-3xl">{module.description}</p>
+            <p className="text-xs text-slate-600 mt-1 max-w-3xl">
+              {module.description}
+            </p>
           )}
         </div>
       </div>
@@ -99,7 +108,9 @@ export function ModuleAuthoringView({
                 {count > 0 && (
                   <span
                     className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                      isCurrent ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-700'
+                      isCurrent
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-slate-200 text-slate-700'
                     }`}
                   >
                     {count}
@@ -113,7 +124,11 @@ export function ModuleAuthoringView({
         {/* Active Section Content */}
         <div className="p-6">
           {activeSection === 'flows' && (
-            <FlowsSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <FlowsSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
           {activeSection === 'screens' && (
             <ScreensSection
@@ -124,25 +139,53 @@ export function ModuleAuthoringView({
             />
           )}
           {activeSection === 'requirements' && (
-            <RequirementsSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <RequirementsSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
           {activeSection === 'businessRules' && (
-            <BusinessRulesSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <BusinessRulesSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
           {activeSection === 'validations' && (
-            <ValidationsSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <ValidationsSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
           {activeSection === 'integrations' && (
-            <IntegrationsSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <IntegrationsSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
           {activeSection === 'errorStates' && (
-            <ErrorStatesSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <ErrorStatesSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
           {activeSection === 'nfrs' && (
-            <NfrsSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <NfrsSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
           {activeSection === 'acceptanceCriteria' && (
-            <AcceptanceCriteriaSection fsd={fsd} module={module} onUpdateModule={onUpdateModule} />
+            <AcceptanceCriteriaSection
+              fsd={fsd}
+              module={module}
+              onUpdateModule={onUpdateModule}
+            />
           )}
         </div>
       </div>

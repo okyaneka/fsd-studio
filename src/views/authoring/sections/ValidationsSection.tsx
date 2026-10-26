@@ -10,6 +10,7 @@ import { createArtifactId } from '../../../core/schema';
 import { PlusIcon, TrashIcon, EditIcon, XMarkIcon } from '../../../components/Icons';
 import { Modal } from '../../../components/Modal';
 import { RelationalIdPicker } from '../RelationalIdPicker';
+import { SectionStatusBadge } from '../components/SectionStatusBadge';
 
 interface ValidationsSectionProps {
   fsd: FsdDocument;
@@ -165,24 +166,21 @@ export function ValidationsSection({
           <p className="text-xs text-slate-500 mt-0.5">
             Bagian wajib standar spesifikasi fungsional FSD.
           </p>
+          <SectionStatusBadge
+            status={module.sectionStates.validations}
+            onChange={(newStatus) => {
+              onUpdateModule({
+                ...module,
+                sectionStates: {
+                  ...module.sectionStates,
+                  validations: newStatus,
+                },
+              });
+            }}
+          />
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-xs">
-            <span className="font-semibold text-slate-600">Status Subbagian:</span>
-            <select
-              value={module.sectionStates.validations}
-              onChange={(e) => updateSectionState(e.target.value as SectionState)}
-              className="px-2.5 py-1 text-xs border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-            >
-              <option value="empty">Kosong (Empty)</option>
-              <option value="in-progress">In-Progress</option>
-              <option value="complete">Selesai (Complete)</option>
-              <option value="tbd">TBD (To Be Decided)</option>
-              <option value="not-applicable">Not Applicable (N/A)</option>
-            </select>
-          </div>
-
           <button
             type="button"
             onClick={handleOpenAddVal}
