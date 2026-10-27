@@ -584,48 +584,51 @@ export function ModulePreviewSection({ module, assetUrls }: ModulePreviewSection
           ) : module.acceptanceCriteria.length === 0 ? (
             <EmptyNotice sectionName="Acceptance Criteria" />
           ) : (
-            <div className="space-y-4">
-              {module.acceptanceCriteria.map((ac) => (
-                <div key={ac.id} className="p-3.5 bg-[#f4f7fa] border border-[#d7dee7] rounded-md">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-xs font-bold text-[#17324d]">
-                      {ac.name}
-                    </h4>
-                    <span className="font-mono text-[10px] font-bold text-[#2e648e] bg-white border border-[#d7dee7] px-2 py-0.5 rounded">
-                      {ac.id}
-                    </span>
-                  </div>
+            <table className="fsd-table">
+              <thead>
+                <tr>
+                  <th className="w-28">ID</th>
+                  <th>Given (Kondisi Awal)</th>
+                  <th>When (Aksi / Pemicu)</th>
+                  <th>Then (Hasil yang Diharapkan)</th>
+                  <th className="w-24">Terkait FR</th>
+                </tr>
+              </thead>
+              <tbody>
+                {module.acceptanceCriteria.map((ac) => {
+                  const givenText =
+                    ac.given ||
+                    (ac.scenarios && ac.scenarios[0] ? ac.scenarios[0].given.join('; ') : '—');
+                  const whenText =
+                    ac.when ||
+                    (ac.scenarios && ac.scenarios[0] ? ac.scenarios[0].when : '—');
+                  const thenText =
+                    ac.then ||
+                    (ac.scenarios && ac.scenarios[0] ? ac.scenarios[0].then.join('; ') : '—');
 
-                  {ac.scenarios && ac.scenarios.length > 0 ? (
-                    <div className="space-y-2 mt-2">
-                      {ac.scenarios.map((sc, scIdx) => (
-                        <div key={scIdx} className="p-2.5 bg-white border border-slate-200 rounded text-xs space-y-1">
-                          {sc.title && (
-                            <div className="font-bold text-slate-800 text-[11px] pb-1 border-b border-slate-100">
-                              Skenario #{scIdx + 1}: {sc.title}
-                            </div>
-                          )}
-                          <div>
-                            <strong className="text-blue-700 font-bold text-[11px]">GIVEN </strong>
-                            <span className="text-slate-700">{sc.given.join(' AND ')}</span>
+                  return (
+                    <tr key={ac.id}>
+                      <td className="font-mono font-bold text-[#2e648e]">
+                        <div>{ac.id}</div>
+                        {ac.name && (
+                          <div className="text-[10px] font-sans font-normal text-slate-500 mt-0.5">
+                            {ac.name}
                           </div>
-                          <div>
-                            <strong className="text-amber-700 font-bold text-[11px]">WHEN </strong>
-                            <span className="text-slate-700">{sc.when}</span>
-                          </div>
-                          <div>
-                            <strong className="text-emerald-700 font-bold text-[11px]">THEN </strong>
-                            <span className="text-slate-700">{sc.then.join(' AND ')}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500 italic">Belum ada skenario yang disusun.</p>
-                  )}
-                </div>
-              ))}
-            </div>
+                        )}
+                      </td>
+                      <td className="text-slate-700 whitespace-pre-line">{givenText}</td>
+                      <td className="text-slate-700">{whenText}</td>
+                      <td className="text-slate-700 whitespace-pre-line">{thenText}</td>
+                      <td className="font-mono text-[10px] text-[#2e648e]">
+                        {ac.requirementIds && ac.requirementIds.length > 0
+                          ? ac.requirementIds.join(', ')
+                          : '—'}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           )}
         </div>
 

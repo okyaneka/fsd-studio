@@ -59,6 +59,9 @@ export function SectionStatusBadge({ status, onChange }: SectionStatusBadgeProps
         <option value="tbd" className="bg-white text-orange-800 font-medium">● TBD (To Be Decided)</option>
         <option value="not-applicable" className="bg-white text-rose-800 font-medium">● Not Applicable (N/A)</option>
       </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-current opacity-70">
+        <ChevronDownIcon className="w-3.5 h-3.5" />
+      </div>
     </div>
   );
 }

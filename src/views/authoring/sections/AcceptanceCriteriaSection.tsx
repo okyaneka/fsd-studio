@@ -3,7 +3,6 @@ import type {
   FsdDocument,
   FsdModule,
   AcceptanceCriterion,
-  GivenWhenThenScenario,
   SectionState,
 } from '../../../core/types';
 import { createArtifactId } from '../../../core/schema';
@@ -23,20 +22,15 @@ export function AcceptanceCriteriaSection({
   module,
   onUpdateModule,
 }: AcceptanceCriteriaSectionProps) {
-  // Acceptance Criteria modal (Given-When-Then)
+  // Acceptance Criteria modal (1 AC = 1 Scenario: Given-When-Then)
   const [acModalOpen, setAcModalOpen] = useState(false);
   const [editingAcIndex, setEditingAcIndex] = useState<number | null>(null);
   const [acName, setAcName] = useState('');
   const [acDesc, setAcDesc] = useState('');
+  const [acGiven, setAcGiven] = useState('');
+  const [acWhen, setAcWhen] = useState('');
+  const [acThen, setAcThen] = useState('');
   const [acReqIds, setAcReqIds] = useState<string[]>([]);
-  const [acScenarios, setAcScenarios] = useState<GivenWhenThenScenario[]>([
-    {
-      title: 'Happy Path - Berhasil',
-      given: ['pengguna berada pada halaman utama yang valid'],
-      when: 'pengguna menekan tombol konfirmasi transaksi',
-      then: ['sistem memvalidasi parameter input', 'sistem menampilkan pesan sukses'],
-    },
-  ]);
 
   const updateSectionState = (state: SectionState) => {
     onUpdateModule({
@@ -52,15 +46,10 @@ export function AcceptanceCriteriaSection({
     setEditingAcIndex(null);
     setAcName('');
     setAcDesc('');
+    setAcGiven('');
+    setAcWhen('');
+    setAcThen('');
     setAcReqIds([]);
-    setAcScenarios([
-      {
-        title: 'Happy Path - Berhasil',
-        given: ['pengguna berada pada halaman utama yang valid'],
-        when: 'pengguna menekan tombol konfirmasi transaksi',
-        then: ['sistem memvalidasi parameter input', 'sistem menampilkan pesan sukses'],
-      },
-    ]);
     setAcModalOpen(true);
   };
 
@@ -68,13 +57,22 @@ export function AcceptanceCriteriaSection({
     const ac = module.acceptanceCriteria[index];
     setEditingAcIndex(index);
     setAcName(ac.name);
-    setAcDesc(ac.description);
+    setAcDesc(ac.description || '');
     setAcReqIds(ac.requirementIds || []);
-    setAcScenarios(
-      ac.scenarios && ac.scenarios.length > 0
-        ? ac.scenarios.map((s) => ({ ...s, title: s.title || '' }))
-        : [{ title: '', given: [''], when: '', then: [''] }]
-    );
+
+    const givenVal =
+      ac.given ??
+      (ac.scenarios && ac.scenarios[0] ? ac.scenarios[0].given.join('\n') : '');
+    const whenVal =
+      ac.when ??
+      (ac.scenarios && ac.scenarios[0] ? ac.scenarios[0].when : '');
+    const thenVal =
+      ac.then ??
+      (ac.scenarios && ac.scenarios[0] ? ac.scenarios[0].then.join('\n') : '');
+
+    setAcGiven(givenVal);
+    setAcWhen(whenVal);
+    setAcThen(thenVal);
     setAcModalOpen(true);
   };
 
@@ -88,12 +86,26 @@ export function AcceptanceCriteriaSection({
         ? module.acceptanceCriteria[editingAcIndex].id
         : createArtifactId('acceptanceCriterion', module.code, seq, undefined, fsd.idConvention);
 
+    const trimmedGiven = acGiven.trim();
+    const trimmedWhen = acWhen.trim();
+    const trimmedThen = acThen.trim();
+
     const newAc: AcceptanceCriterion = {
       id: generatedId,
       name: acName.trim(),
       description: acDesc.trim(),
+      given: trimmedGiven,
+      when: trimmedWhen,
+      then: trimmedThen,
       requirementIds: acReqIds,
-      scenarios: acScenarios,
+      scenarios: [
+        {
+          title: acName.trim(),
+          given: trimmedGiven ? trimmedGiven.split('\n').map((g) => g.trim()).filter(Boolean) : [],
+          when: trimmedWhen,
+          then: trimmedThen ? trimmedThen.split('\n').map((t) => t.trim()).filter(Boolean) : [],
+        },
+      ],
     };
 
     const updatedAc = [...module.acceptanceCriteria];
@@ -146,15 +158,7 @@ export function AcceptanceCriteriaSection({
           </p>
           <SectionStatusBadge
             status={module.sectionStates.acceptanceCriteria}
-            onChange={(newStatus) => {
-              onUpdateModule({
-                ...module,
-                sectionStates: {
-                  ...module.sectionStates,
-                  acceptanceCriteria: newStatus,
-                },
-              });
-            }}
+            onChange={(newStatus) => updateSectionState(newStatus)}
           />
         </div>
 
@@ -191,13 +195,24 @@ export function AcceptanceCriteriaSection({
         ) : (
           <div className="space-y-4">
             {module.acceptanceCriteria.map((ac, acIdx) => {
+              const givenText = ac.given || (ac.scenarios?.[0]?.given?.join('\n') ?? '');
+              const whenText = ac.when || (ac.scenarios?.[0]?.when ?? '');
+              const thenText = ac.then || (ac.scenarios?.[0]?.then?.join('\n') ?? '');
+
               return (
-                <div key={ac.id} className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 space-y-4">
+                <div key={ac.id} className="border border-slate-200 rounded-xl p-5 bg-slate-50/50 space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        {ac.id}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {ac.id}
+                        </span>
+                        {ac.requirementIds && ac.requirementIds.length > 0 && (
+                          <span className="text-[10px] font-mono font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                            Terkait: {ac.requirementIds.join(', ')}
+                          </span>
+                        )}
+                      </div>
                       <h4 className="text-sm font-bold text-slate-900 mt-1">{ac.name}</h4>
                       {ac.description && <p className="text-xs text-slate-500 mt-0.5">{ac.description}</p>}
                     </div>
@@ -221,35 +236,27 @@ export function AcceptanceCriteriaSection({
                     </div>
                   </div>
 
-                  {/* Scenarios (Given-When-Then) */}
-                  {ac.scenarios && ac.scenarios.length > 0 && (
-                    <div className="space-y-3">
-                      {ac.scenarios.map((sc, sIdx) => (
-                        <div key={sIdx} className="bg-white rounded-lg p-3.5 border border-slate-200 text-xs space-y-2">
-                          <div className="font-semibold text-slate-800 border-b border-slate-100 pb-1 flex items-center justify-between">
-                            <span>
-                              {sc.title ? `Skenario #${sIdx + 1}: ${sc.title}` : `Skenario #${sIdx + 1}`}
-                            </span>
-                          </div>
-                          <div className="space-y-1 font-mono text-[11px]">
-                            {sc.given.map((g, gIdx) => (
-                              <div key={gIdx} className="text-slate-700">
-                                <strong className="text-blue-700">{gIdx === 0 ? 'GIVEN' : 'AND'}</strong> {g}
-                              </div>
-                            ))}
-                            <div className="text-slate-700">
-                              <strong className="text-amber-700">WHEN</strong> {sc.when}
-                            </div>
-                            {sc.then.map((t, tIdx) => (
-                              <div key={tIdx} className="text-slate-700">
-                                <strong className="text-emerald-700">{tIdx === 0 ? 'THEN' : 'AND'}</strong> {t}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  {/* Given - When - Then Card Display */}
+                  <div className="bg-white rounded-lg p-3.5 border border-slate-200 text-xs space-y-1.5 font-mono text-[11px]">
+                    {givenText && (
+                      <div className="text-slate-700">
+                        <strong className="text-blue-700 font-sans font-bold text-xs mr-2">GIVEN:</strong>
+                        <span className="whitespace-pre-line font-mono">{givenText}</span>
+                      </div>
+                    )}
+                    {whenText && (
+                      <div className="text-slate-700">
+                        <strong className="text-amber-700 font-sans font-bold text-xs mr-2">WHEN:</strong>
+                        <span className="whitespace-pre-line font-mono">{whenText}</span>
+                      </div>
+                    )}
+                    {thenText && (
+                      <div className="text-slate-700">
+                        <strong className="text-emerald-700 font-sans font-bold text-xs mr-2">THEN:</strong>
+                        <span className="whitespace-pre-line font-mono">{thenText}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -257,12 +264,12 @@ export function AcceptanceCriteriaSection({
         )}
       </div>
 
-      {/* Modal: Acceptance Criterion */}
-      <Modal isOpen={acModalOpen} onClose={() => setAcModalOpen(false)} title="Acceptance Criterion (Given-When-Then)" maxWidth="max-w-2xl">
+      {/* Modal: Acceptance Criterion (1 AC = 1 Scenario) */}
+      <Modal isOpen={acModalOpen} onClose={() => setAcModalOpen(false)} title="Acceptance Criterion (Given-When-Then)" maxWidth="max-w-xl">
         <form onSubmit={handleSaveAc} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">
-              Judul Acceptance Criterion <span className="text-red-500">*</span>
+              Judul Skenario / Kriteria <span className="text-red-500">*</span>
             </label>
             <input
               autoFocus
@@ -276,169 +283,61 @@ export function AcceptanceCriteriaSection({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-xs font-semibold text-slate-700">Skenario Given–When–Then</label>
-              <button
-                type="button"
-                onClick={() =>
-                  setAcScenarios([
-                    ...acScenarios,
-                    { title: '', given: [''], when: '', then: [''] },
-                  ])
-                }
-                className="text-xs text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
-              >
-                + Tambah Skenario
-              </button>
-            </div>
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Deskripsi Singkat (Opsional)
+            </label>
+            <input
+              type="text"
+              placeholder="Keterangan tambahan untuk skenario ini..."
+              value={acDesc}
+              onChange={(e) => setAcDesc(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-            <div className="space-y-3 max-h-64 overflow-y-auto p-1">
-              {acScenarios.map((sc, scIdx) => (
-                <div key={scIdx} className="p-3 rounded-lg border border-slate-200 bg-slate-50 space-y-2 text-xs">
-                  <div className="flex items-center justify-between font-semibold text-slate-700 border-b border-slate-200 pb-1">
-                    <span>Skenario #{scIdx + 1}</span>
-                    {acScenarios.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = [...acScenarios];
-                          updated.splice(scIdx, 1);
-                          setAcScenarios(updated);
-                        }}
-                        className="text-slate-400 hover:text-red-600 cursor-pointer"
-                      >
-                        Hapus
-                      </button>
-                    )}
-                  </div>
+          {/* GIVEN textarea */}
+          <div>
+            <label className="block text-xs font-bold text-blue-700 mb-1">
+              GIVEN <span className="font-normal text-slate-500">(Kondisi Awal / Prasyarat)</span> <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              required
+              rows={2}
+              placeholder="Contoh: Pengguna memiliki akun aktif dan berada pada halaman Login"
+              value={acGiven}
+              onChange={(e) => setAcGiven(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+            />
+          </div>
 
-                  {/* Scenario title input */}
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 mb-0.5">
-                      Nama / Judul Skenario
-                    </label>
-                    <input
-                      type="text"
-                      placeholder={`Contoh: Happy Path, Password Salah, Akun Terkunci...`}
-                      value={sc.title || ''}
-                      onChange={(e) => {
-                        const updated = [...acScenarios];
-                        updated[scIdx].title = e.target.value;
-                        setAcScenarios(updated);
-                      }}
-                      className="w-full px-2.5 py-1 text-xs bg-white border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
-                    />
-                  </div>
+          {/* WHEN textarea */}
+          <div>
+            <label className="block text-xs font-bold text-amber-700 mb-1">
+              WHEN <span className="font-normal text-slate-500">(Aksi Pengguna / Pemicu Kejadian)</span> <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              required
+              rows={2}
+              placeholder="Contoh: Pengguna memasukkan email dan password yang valid lalu menekan Masuk"
+              value={acWhen}
+              onChange={(e) => setAcWhen(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+            />
+          </div>
 
-                  {/* Given inputs */}
-                  <div className="space-y-1">
-                    <span className="font-bold text-blue-700 block">GIVEN:</span>
-                    {sc.given.map((gVal, gIdx) => (
-                      <div key={gIdx} className="flex gap-2">
-                        <input
-                          type="text"
-                          required
-                          placeholder="Kondisi awal..."
-                          value={gVal}
-                          onChange={(e) => {
-                            const updated = [...acScenarios];
-                            updated[scIdx].given[gIdx] = e.target.value;
-                            setAcScenarios(updated);
-                          }}
-                          className="flex-1 px-2.5 py-1 text-xs bg-white border border-slate-200 rounded"
-                        />
-                        {sc.given.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = [...acScenarios];
-                              updated[scIdx].given.splice(gIdx, 1);
-                              setAcScenarios(updated);
-                            }}
-                            className="text-slate-400 hover:text-red-600 px-1 cursor-pointer"
-                          >
-                            &times;
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updated = [...acScenarios];
-                        updated[scIdx].given.push('');
-                        setAcScenarios(updated);
-                      }}
-                      className="text-[11px] text-blue-600 hover:text-blue-700 font-semibold cursor-pointer"
-                    >
-                      + Tambah GIVEN / AND
-                    </button>
-                  </div>
-
-                  {/* When input */}
-                  <div>
-                    <span className="font-bold text-amber-700 block mb-0.5">WHEN:</span>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Aksi pemicu oleh pengguna..."
-                      value={sc.when}
-                      onChange={(e) => {
-                        const updated = [...acScenarios];
-                        updated[scIdx].when = e.target.value;
-                        setAcScenarios(updated);
-                      }}
-                      className="w-full px-2.5 py-1 text-xs bg-white border border-slate-200 rounded"
-                    />
-                  </div>
-
-                  {/* Then inputs */}
-                  <div className="space-y-1">
-                    <span className="font-bold text-emerald-700 block">THEN:</span>
-                    {sc.then.map((tVal, tIdx) => (
-                      <div key={tIdx} className="flex gap-2">
-                        <input
-                          type="text"
-                          required
-                          placeholder="Hasil / respon yang diharapkan..."
-                          value={tVal}
-                          onChange={(e) => {
-                            const updated = [...acScenarios];
-                            updated[scIdx].then[tIdx] = e.target.value;
-                            setAcScenarios(updated);
-                          }}
-                          className="flex-1 px-2.5 py-1 text-xs bg-white border border-slate-200 rounded"
-                        />
-                        {sc.then.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              const updated = [...acScenarios];
-                              updated[scIdx].then.splice(tIdx, 1);
-                              setAcScenarios(updated);
-                            }}
-                            className="text-slate-400 hover:text-red-600 px-1 cursor-pointer"
-                          >
-                            &times;
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const updated = [...acScenarios];
-                        updated[scIdx].then.push('');
-                        setAcScenarios(updated);
-                      }}
-                      className="text-[11px] text-emerald-600 hover:text-emerald-700 font-semibold cursor-pointer"
-                    >
-                      + Tambah THEN / AND
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* THEN textarea */}
+          <div>
+            <label className="block text-xs font-bold text-emerald-700 mb-1">
+              THEN <span className="font-normal text-slate-500">(Hasil / Respon yang Diharapkan)</span> <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              required
+              rows={2}
+              placeholder="Contoh: Sistem mengautentikasi dan mengarahkan pengguna ke halaman Dashboard"
+              value={acThen}
+              onChange={(e) => setAcThen(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
+            />
           </div>
 
           <div className="pt-2 border-t border-slate-100">
@@ -472,4 +371,3 @@ export function AcceptanceCriteriaSection({
     </div>
   );
 }
-

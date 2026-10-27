@@ -34,7 +34,13 @@ export interface IntegrationRequirement extends IdentifiedItem { owner: string; 
 export interface ErrorState extends IdentifiedItem { trigger: string; userMessage: string; recovery: string; relatedRequirementIds: string[]; }
 export interface NonFunctionalRequirement extends IdentifiedItem { category: string; measure: string; }
 export interface GivenWhenThenScenario { title?: string; given: string[]; when: string; then: string[]; }
-export interface AcceptanceCriterion extends IdentifiedItem { requirementIds: string[]; scenarios: GivenWhenThenScenario[]; }
+export interface AcceptanceCriterion extends IdentifiedItem {
+  requirementIds: string[];
+  given?: string;
+  when?: string;
+  then?: string;
+  scenarios?: GivenWhenThenScenario[];
+}
 export interface ModuleSections { flows: Flow[]; screens: Screen[]; requirements: FunctionalRequirement[]; businessRules: BusinessRule[]; validations: ValidationRule[]; integrations: IntegrationRequirement[]; errorStates: ErrorState[]; nfrs: NonFunctionalRequirement[]; acceptanceCriteria: AcceptanceCriterion[]; }
 export interface FsdModule extends ModuleSections { id: string; code: string; name: string; description: string; sectionStates: Record<ModuleSection, SectionState>; features?: string[]; }
 export interface DocumentMetadata { title: string; code: string; version: string; status: DocumentStatus; author: string; reviewers: string[]; targetRelease: string; createdAt: string; updatedAt: string; }
