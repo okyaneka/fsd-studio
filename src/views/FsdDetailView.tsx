@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { Project, FsdDocument, FsdModule, SectionState, ModuleSection } from '../core/types';
 import { createEmptyModule, normalizeModuleCode } from '../core/schema';
 import { putRecord, deleteAssetsForModule } from '../core/database';
@@ -26,6 +27,7 @@ import { ModuleAuthoringView } from './authoring/ModuleAuthoringView';
 import { TraceabilityMatrixView } from './authoring/TraceabilityMatrixView';
 import { BaselineCheckModal } from './authoring/BaselineCheckModal';
 import { DocumentPreviewView } from './preview/DocumentPreviewView';
+import { formatDateIndonesian } from './preview/previewHelpers';
 
 interface FsdDetailViewProps {
   project: Project;
@@ -54,11 +56,31 @@ export function FsdDetailView({
   onBackToProject,
   onRefresh,
 }: FsdDetailViewProps) {
-  const [activeTab, setActiveTab] = useState<FsdTab>('modules');
-  const [activeModuleId, setActiveModuleId] = useState<string | null>(null);
-  const [isBaselineModalOpen, setIsBaselineModalOpen] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const paramTab = searchParams.get('tab') as FsdTab | null;
+  const activeTab: FsdTab =
+    paramTab && ['modules', 'traceability', 'documentControl', 'globalContext', 'openItemsApproval'].includes(paramTab)
+      ? paramTab
+      : 'modules';
+
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [previewModuleId, setPreviewModuleId] = useState<string | null>(null);
+
+  const setActiveTab = (tab: FsdTab) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (tab === 'modules') {
+        next.delete('tab');
+      } else {
+        next.set('tab', tab);
+      }
+      return next;
+    });
+  };
+
+  const [isBaselineModalOpen, setIsBaselineModalOpen] = useState(false);
 
   // Add / Edit / Delete module modals
   const [isAddModuleModalOpen, setIsAddModuleModalOpen] = useState(false);
@@ -75,8 +97,6 @@ export function FsdDetailView({
   const [editModCode, setEditModCode] = useState('');
   const [editModDesc, setEditModDesc] = useState('');
 
-  const activeModule = fsd.modules.find((m) => m.id === activeModuleId);
-
   // Handler for full FSD document updates from sub-editors
   const handleFsdUpdate = async (updatedFsd: FsdDocument) => {
     try {
@@ -85,20 +105,6 @@ export function FsdDetailView({
     } catch (err) {
       alert(`Gagal menyimpan perubahan: ${err instanceof Error ? err.message : String(err)}`);
     }
-  };
-
-  // Handler for single module update from ModuleAuthoringView
-  const handleModuleUpdate = async (updatedModule: FsdModule) => {
-    const updatedModules = fsd.modules.map((m) => (m.id === updatedModule.id ? updatedModule : m));
-    const updatedFsd: FsdDocument = {
-      ...fsd,
-      modules: updatedModules,
-      metadata: {
-        ...fsd.metadata,
-        updatedAt: new Date().toISOString(),
-      },
-    };
-    await handleFsdUpdate(updatedFsd);
   };
 
   const handleOpenAddModal = () => {
@@ -133,7 +139,7 @@ export function FsdDetailView({
       await putRecord(STORES.fsdDocuments, updatedFsd);
       await onRefresh();
       setIsAddModuleModalOpen(false);
-      setActiveModuleId(newModule.id);
+      navigate(`/projects/${project.id}/fsd/${fsd.id}/modules/${newModule.id}`);
     } catch (err) {
       alert(`Gagal menambah modul: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
@@ -220,7 +226,6 @@ export function FsdDetailView({
       };
       await putRecord(STORES.fsdDocuments, updatedFsd);
       await onRefresh();
-      if (activeModuleId === deletingModule.id) setActiveModuleId(null);
       setDeletingModule(null);
     } catch (err) {
       alert(`Gagal menghapus modul: ${err instanceof Error ? err.message : String(err)}`);
@@ -267,21 +272,6 @@ export function FsdDetailView({
     );
   }
 
-  // If a specific module is being authored, render ModuleAuthoringView
-  if (activeModule) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ModuleAuthoringView
-          fsd={fsd}
-          module={activeModule}
-          projectId={project.id}
-          onUpdateModule={handleModuleUpdate}
-          onBack={() => setActiveModuleId(null)}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Breadcrumb */}
@@ -322,8 +312,7 @@ export function FsdDetailView({
             <button
               type="button"
               onClick={() => {
-                setPreviewModuleId(null);
-                setIsPreviewMode(true);
+                navigate(`/projects/${project.id}/fsd/${fsd.id}/preview`);
               }}
               className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors cursor-pointer"
             >
@@ -341,7 +330,7 @@ export function FsdDetailView({
             <button
               type="button"
               onClick={handleOpenAddModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors cursor-pointer"
             >
               <PlusIcon className="w-4 h-4" />
               Tambah Modul
@@ -357,7 +346,9 @@ export function FsdDetailView({
           </div>
           <div>
             <span className="text-slate-400 block font-medium">Target Release</span>
-            <span className="text-slate-700 font-semibold mt-0.5 block">{fsd.metadata.targetRelease || '—'}</span>
+            <span className="text-slate-700 font-semibold mt-0.5 block">
+              {formatDateIndonesian(fsd.metadata.targetRelease, '—')}
+            </span>
           </div>
           <div>
             <span className="text-slate-400 block font-medium">ID Prefix Namespace</span>
@@ -366,7 +357,7 @@ export function FsdDetailView({
           <div>
             <span className="text-slate-400 block font-medium">Terakhir Diperbarui</span>
             <span className="text-slate-700 font-semibold mt-0.5 block">
-              {new Date(fsd.metadata.updatedAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+              {formatDateIndonesian(fsd.metadata.updatedAt, '—')}
             </span>
           </div>
         </div>
@@ -488,7 +479,7 @@ export function FsdDetailView({
                 return (
                   <div
                     key={mod.id}
-                    onClick={() => setActiveModuleId(mod.id)}
+                    onClick={() => navigate(`/projects/${project.id}/fsd/${fsd.id}/modules/${mod.id}`)}
                     className="group bg-white border border-slate-200 hover:border-blue-400 rounded-xl p-6 shadow-xs transition-all space-y-4 cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-4">
@@ -527,8 +518,7 @@ export function FsdDetailView({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            setPreviewModuleId(mod.id);
-                            setIsPreviewMode(true);
+                            navigate(`/projects/${project.id}/fsd/${fsd.id}/preview?module=${mod.id}`);
                           }}
                           className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
                           title="Preview Modul Ini"

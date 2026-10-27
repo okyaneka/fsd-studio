@@ -1,4 +1,5 @@
 import type { FsdDocument, Project } from '../../core/types';
+import { formatDateIndonesian } from './previewHelpers';
 
 interface DocumentCoverProps {
   project?: Project;
@@ -7,11 +8,7 @@ interface DocumentCoverProps {
 
 export function DocumentCover({ project, fsd }: DocumentCoverProps) {
   const { metadata, idConvention } = fsd;
-  const formattedDate = new Date(metadata.updatedAt).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  const formattedDate = formatDateIndonesian(metadata.updatedAt, '—');
 
   return (
     <section className="page cover" id="cover">
@@ -69,7 +66,9 @@ export function DocumentCover({ project, fsd }: DocumentCoverProps) {
             </tr>
             <tr>
               <td className="p-2.5 font-bold bg-[#f4f7fa] border border-[#d7dee7] text-[#17324d]">Target Release</td>
-              <td className="p-2.5 border border-[#d7dee7] text-[#202a36]">{metadata.targetRelease || 'To be confirmed'}</td>
+              <td className="p-2.5 border border-[#d7dee7] text-[#202a36]">
+                {formatDateIndonesian(metadata.targetRelease, 'To be confirmed')}
+              </td>
             </tr>
             <tr>
               <td className="p-2.5 font-bold bg-[#f4f7fa] border border-[#d7dee7] text-[#17324d]">Terakhir Diperbarui</td>

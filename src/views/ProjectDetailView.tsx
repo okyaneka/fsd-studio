@@ -6,6 +6,7 @@ import { STORES, DOCUMENT_STATUSES } from '../core/constants';
 import { Modal } from '../components/Modal';
 import { ArrowLeftIcon, PlusIcon, DocumentIcon, EditIcon, TrashIcon, ChevronRightIcon, ExclamationTriangleIcon, LayersIcon, DownloadIcon } from '../components/Icons';
 import { downloadBackupFile } from '../core/backup';
+import { formatDateIndonesian } from './preview/previewHelpers';
 
 interface ProjectDetailViewProps {
   project: Project;
@@ -280,7 +281,7 @@ export function ProjectDetailView({
                       )}
                       {fsd.metadata.targetRelease && (
                         <div>
-                          Target Release: <span className="text-slate-700 font-medium">{fsd.metadata.targetRelease}</span>
+                          Target Release: <span className="text-slate-700 font-medium">{formatDateIndonesian(fsd.metadata.targetRelease, fsd.metadata.targetRelease)}</span>
                         </div>
                       )}
                       {fsd.idConvention.prefix && (
@@ -395,8 +396,7 @@ export function ProjectDetailView({
                 Target Release
               </label>
               <input
-                type="text"
-                placeholder="Contoh: Q4 2026 / Sprint 24"
+                type="date"
                 value={createTargetRelease}
                 onChange={(e) => setCreateTargetRelease(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -504,7 +504,7 @@ export function ProjectDetailView({
                 Target Release
               </label>
               <input
-                type="text"
+                type="date"
                 value={editTargetRelease}
                 onChange={(e) => setEditTargetRelease(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

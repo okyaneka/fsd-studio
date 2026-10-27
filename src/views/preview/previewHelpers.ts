@@ -2,6 +2,39 @@ export function metadataTitle(title: string): string {
   return title.trim() || 'Untitled FSD';
 }
 
+export function formatDateIndonesian(
+  dateInput: string | Date | undefined | null,
+  fallback = 'To be confirmed'
+): string {
+  if (!dateInput) return fallback;
+  if (typeof dateInput === 'string' && !dateInput.trim()) return fallback;
+
+  try {
+    // If it's a YYYY-MM-DD format, parse parts directly to avoid UTC timezone off-by-one
+    if (typeof dateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim())) {
+      const [year, month, day] = dateInput.trim().split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+      });
+    }
+
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) {
+      return typeof dateInput === 'string' ? dateInput : fallback;
+    }
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  } catch {
+    return typeof dateInput === 'string' ? dateInput : fallback;
+  }
+}
+
 export function groupItemsByFeature<T extends { feature?: string }>(
   items: T[],
   moduleFeatures?: string[]
